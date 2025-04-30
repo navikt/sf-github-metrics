@@ -1,11 +1,11 @@
 apiVersion: nais.io/v1alpha1
 kind: Application
 metadata:
-  name: backend-golden-path
-  namespace: appsec
+  name: sf-github-metrics
+  namespace: teamcrm
 spec:
   ingresses:
-    - https://backend-golden-path.intern.dev.nav.no
+    - https://sf-github-metrics.intern.dev.nav.no
   image: {{image}}
   port: 8080
   replicas:

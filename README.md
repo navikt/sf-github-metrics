@@ -1,10 +1,7 @@
-# backend-golden-path
+# sf-github-metrics
 
-![workflow](https://github.com/navikt/backend-golden-path/actions/workflows/main.yaml/badge.svg)
-
-## Overview
-This is a demo repository that offers a golden path for JVM projects.
-The workflows are defined using GitHub Actions and are located in the `.github/workflows` directory.
+Simple forwarder to [pushgateway](https://github.com/prometheus/pushgateway),
+used from github actions or other runners external to Nav.
 
 ## Workflows
 
@@ -19,9 +16,9 @@ This workflow is triggered on pull requests and performs the following steps:
 
 Workflow file: `.github/workflows/prs.yaml`
 
-### 2. Build and deploy main
+### 2. Build and deploy master
 
-This workflow triggers on push to main and when dependabot updates the dependencies.
+This workflow triggers on push to master and when dependabot updates the dependencies.
 
 - **Setup same as test workflow** (see above).
 - ...
@@ -30,7 +27,7 @@ This workflow triggers on push to main and when dependabot updates the dependenc
 - **Scan docker image for secrets**: Uses the `aquasecurity/trivy-action` action to scan the Docker image for secrets and generates a SARIF file.
 - **Upload SARIF file**: Uses the `github/codeql-action/upload-sarif` action to upload the SARIF file.
 
-Workflow file: `.github/workflows/main.yaml`
+Workflow file: `.github/workflows/master.yaml`
 
 ### 3. Dependabot auto-merge
 
@@ -56,10 +53,11 @@ Workflow file: `.github/workflows/codeql.yml`
 
 ## Contact
 
-This project is maintained by [@appsec](https://github.com/orgs/navikt/teams/appsec).
+This project is maintained by
+[@teamcrm](https://github.com/orgs/navikt/teams/teamcrm).
 
-Questions and/or feature requests? Please create an [issue](https://github.com/navikt/appsec-stats/issues).
+Questions and/or feature requests? Please create an [issue](https://github.com/navikt/sf-github-metrics/issues).
 
-If you work in [@navikt](https://github.com/navikt) you can reach us at the Slack channel [#appsec](https://nav-it.slack.com/archives/C06P91VN27M).
+If you work in [@navikt](https://github.com/navikt) you can reach us at the Slack channel [#platforce](https://nav-it.slack.com/archives/CMYSGB77B).
 
 

@@ -2,7 +2,7 @@ val ktorVersion = "3.1.2"
 val logbackVersion = "1.5.18"
 val logstashEncoderVersion = "8.1"
 val junitVersion = "5.12.2"
-val mainClassName = "no.nav.MainKt"
+val mainClassName = "no.nav.sf.github.metrics.MainKt"
 
 plugins {
     kotlin("jvm") version "2.1.20"
@@ -20,6 +20,9 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
+
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-cio:$ktorVersion")
 
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashEncoderVersion")

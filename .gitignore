@@ -3,3 +3,9 @@
 build
 .kotlin
 .idea
+
+# misc
+.*.sw?
+*.vim
+TAGS
+tags
