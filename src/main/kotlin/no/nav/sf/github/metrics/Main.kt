@@ -21,16 +21,21 @@ val logger: Logger = LoggerFactory.getLogger("Main")
  * forward stats for a given job and an optionally specified instance
  * often the instance is given in the data instead of the path
  */
-suspend fun forward(body: String?, jobname: String, instance: String? = null): HttpResponse {
+suspend fun forward(body: String?, jobname: String, instance: String? = null): HttpStatusCode {
     val client = HttpClient(CIO)
     val root = System.getenv("PROMGATEADDRESS") ?: "http://172.17.0.3:9091" // default to private network https://www.rfc-editor.org/rfc/rfc1918
     val url = instance?.let { "${root}/metrics/job/$jobname/instance/$it" } ?: "${root}/metrics/job/$jobname"
 
-    val response: HttpResponse = client.post(url) {
-        contentType(ContentType.Text.Plain)
-        setBody(body)
+    try {
+        val response: HttpResponse = client.post(url) {
+            contentType(ContentType.Text.Plain)
+            setBody(body)
+        }
+        return HttpStatusCode(200, "success")
+    } catch (e: Exception) {
+        logger.error("$e (${e.stackTraceToString()})")
+        return HttpStatusCode(502, "failed to forward log data")
     }
-    return response
 }
 
 fun Application.module() {
@@ -41,8 +46,7 @@ fun Application.module() {
                 val jobname = call.parameters.get("jobname")!!
                 val instance = call.parameters.get("instance")!!
                 val response = forward(body, jobname, instance)
-                logger.info("${response}")
-                call.respond("whatever\n")
+                call.respondText(response.description, status=response)
             }
         }
         route("/metrics/job/{jobname}") {
@@ -50,8 +54,8 @@ fun Application.module() {
                 val body: String? = call.receiveNullable(typeInfo<String>())
                 val jobname = call.parameters.get("jobname")!!
                 val response = forward(body, jobname)
-                logger.info("${response}")
-                call.respond("whomever\n")
+                println("xyzzy $response")
+                call.respondText(response.description, status=response)
             }
         }
     }

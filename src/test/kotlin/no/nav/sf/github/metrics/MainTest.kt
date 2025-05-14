@@ -13,11 +13,11 @@ class MainTest {
         application {
             module()
         }
-        val response = client.post("/metrics/job/foo/instance/bar") {
+        val response = client.post("/metrics/job/foo") {
             contentType(ContentType.Text.Plain)
             setBody("omg wtf")
         }
         assertEquals(HttpStatusCode.OK, response.status)
-        assertEquals("whatever\n", response.bodyAsText())
+        assertEquals("success", response.bodyAsText())
     }
 }
