@@ -8,16 +8,16 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class MainTest {
-    @Test
-    fun `server is up and talks to local prometheus gate server, will fail if prometheus gateway isn't running at ip 0xac110003`() = testApplication {
-        application {
-            module()
-        }
-        val response = client.post("/metrics/job/foo") {
-            contentType(ContentType.Text.Plain)
-            setBody("omg wtf")
-        }
-        assertEquals(HttpStatusCode.OK, response.status)
-        assertEquals("success", response.bodyAsText())
-    }
+    //@Test
+    //fun `server is up and talks to local prometheus gate server, will fail if prometheus gateway isn't running at ip 0xac110003`() = testApplication {
+    //    application {
+    //        module()
+    //    }
+    //    val response = client.post("/metrics/job/foo") {
+    //        contentType(ContentType.Text.Plain)
+    //        setBody("omg wtf")
+    //    }
+    //    assertEquals(HttpStatusCode.OK, response.status)
+    //    assertEquals("success", response.bodyAsText())
+    //}
 }
