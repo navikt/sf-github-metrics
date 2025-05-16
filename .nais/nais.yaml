@@ -6,11 +6,21 @@ metadata:
 spec:
   ingresses:
     - https://sf-github-metrics.intern.dev.nav.no
-  image: "{{image}}"
+  image: '{{image}}'
   port: 8080
   replicas:
     max: 1
     min: 1
+  liveness:
+    path: /isAlive
+    initialDelay: 5
+    periodSeconds: 5
+    failureThreshold: 30
+  readiness:
+    path: /isReady
+    initialDelay: 5
+    periodSeconds: 5
+    failureThreshold: 30
   resources:
     requests:
       cpu: 50m
@@ -19,3 +29,11 @@ spec:
     logging:
       destinations:
         - id: loki
+  env:
+    - name: PROMGATEADDRESS
+      value: prometheus-pushgateway.nais-system:9091
+  accessPolicy:
+    outbound:
+      rules:
+        - application: prometheus-pushgateway
+          namespace: nais-system

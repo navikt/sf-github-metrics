@@ -40,6 +40,12 @@ suspend fun forward(body: String?, jobname: String, instance: String? = null): H
 
 fun Application.module() {
     routing {
+        get("/isAlive") {
+            call.respondText("yup")
+        }
+        get("/isReady") {
+            call.respondText("fine")
+        }
         route("/metrics/job/{jobname}/instance/{instance}") {
             post {
                 val body: String? = call.receiveNullable(typeInfo<String>())
