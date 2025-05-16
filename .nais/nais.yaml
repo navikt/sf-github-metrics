@@ -6,7 +6,7 @@ metadata:
 spec:
   ingresses:
     - https://sf-github-metrics.intern.dev.nav.no
-  image: {{image}}
+  image: "{{image}}"
   port: 8080
   replicas:
     max: 1
