@@ -13,6 +13,7 @@ jobs:
       contents: write # for dependency graph & sarif
       security-events: write # push sarif to github security
       id-token: write # for nais docker-build-push
+      actions: read # for upload-sarif in non-public repos
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.docker-push.outputs.image }}
