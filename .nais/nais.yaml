@@ -31,7 +31,7 @@ spec:
         - id: loki
   env:
     - name: PROMGATEADDRESS
-      value: prometheus-pushgateway.nais-system:9091
+      value: http://prometheus-pushgateway.nais-system:9091
   accessPolicy:
     outbound:
       rules:
