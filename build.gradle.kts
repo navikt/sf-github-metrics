@@ -6,6 +6,7 @@ val mainClassName = "no.nav.sf.github.metrics.MainKt"
 
 plugins {
     kotlin("jvm") version "2.1.21"
+    kotlin("plugin.serialization").version("2.1.20")
 }
 
 repositories {
@@ -18,9 +19,11 @@ kotlin {
 
 dependencies {
     implementation(kotlin("stdlib"))
+
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
     implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
-
+    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
 

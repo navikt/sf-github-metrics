@@ -103,6 +103,25 @@ In another shell, run
 The server should respond with `success`. Create a panel in grafana with the
 query `answer` and the value 42 should promptly show up.
 
+## Anatomy of a call
+
+```mermaid
+sequenceDiagram
+    runner ->> sf-github-metrics: message
+    runner ->> sf-github-metrics: runner
+    runner ->> sf-github-metrics: signature
+    alt verification ok
+        sf-github-metrics ->> pushgateway: message
+        alt pushgateway ok
+            sf-github-metrics -->> runner: 200
+        else pushgateway unreachable
+            sf-github-metrics -->> runner: 502
+        end
+    else verification failed
+        sf-github-metrics -->> runner: 401
+    end
+```
+
 ## Workflows
 
 ### 1. Run test & build on PRs
