@@ -3,6 +3,106 @@
 Simple forwarder to [pushgateway](https://github.com/prometheus/pushgateway),
 used from github actions or other runners external to Nav.
 
+## Local testing
+
+### Docker containers
+
+If you want to test locally, you will want to have running:
+- prometheus
+- prometheus pushgateway
+- grafana
+
+Set them up like so:
+
+#### Prometheus
+
+```
+mkdir etcprometheus
+cat > etcprometheus/prometheus.yml <<EOF
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  scrape_protocols:
+  - OpenMetricsText1.0.0
+  - OpenMetricsText0.0.1
+  - PrometheusText1.0.0
+  - PrometheusText0.0.4
+  evaluation_interval: 15s
+runtime:
+  gogc: 75
+alerting:
+  alertmanagers:
+  - follow_redirects: true
+    enable_http2: true
+    scheme: http
+    timeout: 10s
+    api_version: v2
+    static_configs:
+    - targets: []
+scrape_configs:
+- job_name: prometheus
+  honor_timestamps: true
+  honor_labels: true
+  track_timestamps_staleness: false
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  scrape_protocols:
+  - OpenMetricsText1.0.0
+  - OpenMetricsText0.0.1
+  - PrometheusText1.0.0
+  - PrometheusText0.0.4
+  metrics_path: /metrics
+  scheme: http
+  enable_compression: true
+  follow_redirects: true
+  enable_http2: true
+  static_configs:
+  - targets:
+    - localhost:9090
+    - 172.17.0.3:9091
+    labels:
+      app: prometheus
+EOF
+```
+
+Use this config to run a prometheus instance:
+`docker run -p 9090:9090 -v "$(readlink -f etcprometheus)":/etc/prometheus/ prom/prometheus`
+
+#### Prometheus pushgateway
+
+`docker run -p 9091:9091 prom/pushgateway`
+
+#### Grafana
+
+`docker run -p 3000:3000 grafana/grafana-oss`
+
+### sf-github-metrics
+
+If the docker containers were started in the above order, the gateway should be
+running on `172.17.0.3`. You can test this with the following:
+
+`docker ps |while read -r l; do printf '%s  ' "$l"; name=${l##* }; if ! [[ $name = NAMES ]]; then docker inspect -f {{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}} "$name"; else echo; fi; done`
+
+You should get output looking roughly like this:
+
+```
+CONTAINER ID   IMAGE                 COMMAND                  ...   NAMES  
+60f47cc1e709   prom/pushgateway      "/bin/pushgateway"       ...   brave_hawking  172.17.0.3
+4fee037af9d9   prom/prometheus       "/bin/prometheus --c…"   ...   pedantic_wu  172.17.0.2
+a6140e758bc2   grafana/grafana-oss   "/run.sh"                ...   objective_wilson  172.17.0.4
+```
+
+Now you can run the app:
+
+`./gradlew clean build -x test && docker build . -t sgg && docker run -p 8080:8080 sgg`
+
+In another shell, run
+
+`echo 'answer 42' | curl --data-binary @- http://127.1:8080/measures/job/zyxxy`
+
+The server should respond with `success`. Create a panel in grafana with the
+query `answer` and the value 42 should promptly show up.
+
 ## Workflows
 
 ### 1. Run test & build on PRs
