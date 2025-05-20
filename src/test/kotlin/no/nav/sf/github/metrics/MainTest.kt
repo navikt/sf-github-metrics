@@ -13,7 +13,7 @@ class MainTest {
     //    application {
     //        module()
     //    }
-    //    val response = client.post("/metrics/job/foo") {
+    //    val response = client.post("/measures/job/foo") {
     //        contentType(ContentType.Text.Plain)
     //        setBody("omg wtf")
     //    }

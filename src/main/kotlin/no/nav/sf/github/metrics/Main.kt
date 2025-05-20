@@ -46,7 +46,7 @@ fun Application.module() {
         get("/isReady") {
             call.respondText("fine")
         }
-        route("/metrics/job/{jobname}/instance/{instance}") {
+        route("/measures/job/{jobname}/instance/{instance}") {
             post {
                 val body: String? = call.receiveNullable(typeInfo<String>())
                 val jobname = call.parameters.get("jobname")!!
@@ -55,7 +55,7 @@ fun Application.module() {
                 call.respondText(response.description, status=response)
             }
         }
-        route("/metrics/job/{jobname}") {
+        route("/measures/job/{jobname}") {
             post {
                 val body: String? = call.receiveNullable(typeInfo<String>())
                 val jobname = call.parameters.get("jobname")!!
