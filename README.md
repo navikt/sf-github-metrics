@@ -66,6 +66,7 @@ EOF
 ```
 
 Use this config to run a prometheus instance:
+
 `docker run -p 9090:9090 -v "$(readlink -f etcprometheus)":/etc/prometheus/ prom/prometheus`
 
 #### Prometheus pushgateway
@@ -92,16 +93,35 @@ CONTAINER ID   IMAGE                 COMMAND                  ...   NAMES
 a6140e758bc2   grafana/grafana-oss   "/run.sh"                ...   objective_wilson  172.17.0.4
 ```
 
+#### Keys
+
+Before the app will forward your call, you will need to set up a key pair. In a
+directory of your choice, run:
+
+```
+openssl ecparam -name secp256r1 -genkey -noout -out private.pem
+openssl ec -in private.pem -pubout -out public.pem
+```
+
+Add the public key to `publicKeys` in `Runners.kt`, using the index `local`.
+
+#### Testing
+
 Now you can run the app:
 
-`./gradlew clean build -x test && docker build . -t sgg && docker run -p 8080:8080 sgg`
+`./gradlew clean build -x test && docker build . -t sgm && docker run -p 8080:8080 sgm`
 
-In another shell, run
+In another shell, in the directory containing your private key, run:
 
-`echo 'answer 42' | curl --data-binary @- http://127.1:8080/measures/job/zyxxy`
+`jay() { sig=$(printf %s "$1" | openssl dgst -sha256 -sign private.pem -out - | base64 -w0); jq --compact-output --null-input --arg msg "$1" --arg runner local --arg sig "$sig" '{"metrics":$msg,"runner":$runner,"signature":$sig}'; }`
 
-The server should respond with `success`. Create a panel in grafana with the
-query `answer` and the value 42 should promptly show up.
+This will sign the message you pass it and pack it into a JSON payload. We can
+use this to send a metric:
+
+`jay 'answer 42' | tee >(curl -D- -H 'Content-Type: application/json' --data-binary @- http://127.1:8080/measures/job/zyxxy)`
+
+The app should send a 200 response. Create a panel in grafana with the query
+`answer` and the value `42` should promptly show up.
 
 ## Anatomy of a call
 
