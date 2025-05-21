@@ -5,7 +5,7 @@ metadata:
   namespace: teamcrm
 spec:
   ingresses:
-    - https://sf-github-metrics.intern.dev.nav.no
+    - https://sf-github-metrics.ekstern.dev.nav.no
   image: '{{image}}'
   port: 8080
   replicas:
