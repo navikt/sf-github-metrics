@@ -34,13 +34,20 @@ suspend fun forward(body: String?, jobname: String, instance: String? = null): H
     val url = instance?.let {
         "${root}/metrics/job/$jobname/instance/$it"
     } ?: "${root}/metrics/job/$jobname"
-
     try {
         val response: HttpResponse = client.post(url) {
             contentType(ContentType.Text.Plain)
             setBody(body + "\n") // metrics must end with a newline, just add it
         }
-        return HttpStatusCode(200, "OK")
+        logger.info("server responds ${response.status}")
+        if (response.status.value == 400) {
+            return HttpStatusCode(400, "Metrics not accepted by prometheus")
+        } else if (response.status.value == 200) {
+            return HttpStatusCode(200, "OK")
+        } else {
+            logger.error("Unexpected response: ${response.status}")
+            return response.status
+        }
     } catch (ce: ConnectException) {
         logger.error("${ce.stackTraceToString()})")
         return HttpStatusCode(502, "Failed to connect to pushgateway")
@@ -89,14 +96,19 @@ fun Application.module() {
         post("/measures/job/{jobname}") {
             val (metrics, runner, signature) = call.receive<Payload>()
             val jobname = call.parameters.get("jobname")!!
+            logger.info("attempting to forward metrics for job $jobname from runner $runner")
             Runners.publicKeys.get(runner)?.let {
                 if (validator.isValid(metrics, it, signature)) {
                     val response = forward(metrics, jobname)
                     call.respondText(response.description, status=response)
                 } else {
+                    logger.info("bad signature")
                     call.respondText("Bad signature", status=HttpStatusCode(401, "Bad signature"))
                 }
-            } ?: call.respondText("Unrecognised runner", status=HttpStatusCode(401, "Unrecognised runner"))
+            } ?: run {
+                logger.info("unrecognised runner")
+                call.respondText("Unrecognised runner", status=HttpStatusCode(401, "Unrecognised runner"))
+            }
         }
     }
 }
