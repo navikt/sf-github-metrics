@@ -34,7 +34,7 @@ class MessageValidator {
             sig.update(message.toByteArray())
             return sig.verify(Base64.getDecoder().decode(signature))
         } catch(iae: IllegalArgumentException) {
-            logger.error("probably received some invalid base64: ${iae.stackTraceToString()}")
+            logger.warn("probably received some invalid base64: ${iae.stackTraceToString()}")
             return false
         }
     }
