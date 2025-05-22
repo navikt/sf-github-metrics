@@ -98,15 +98,24 @@ fun Application.module() {
         get("/isReady") {
             call.respondText("Ready!")
         }
-        //route("/measures/job/{jobname}/instance/{instance}") {
-        //    post {
-        //        val body: String? = call.receiveNullable(typeInfo<String>())
-        //        val jobname = call.parameters.get("jobname")!!
-        //        val instance = call.parameters.get("instance")!!
-        //        val response = forward(body, jobname, instance)
-        //        call.respondText(response.description, status=response)
-        //    }
-        //}
+        post("/measures/job/{jobname}/instance/{instance}") {
+            val (metrics, runner, signature) = call.receive<Payload>()
+            val jobname = call.parameters.get("jobname")!!
+            val instance = call.parameters.get("instance")!!
+            logger.info("got request to forward metrics from runner $runner on instance $instance for job $jobname")
+            Runners.publicKeys.get(runner)?.let {
+                if (validator.isValid(metrics, it, signature)) {
+                    val response = forward(metrics, jobname, instance)
+                    call.respondText(response.reason, status=response.status)
+                } else {
+                    logger.info("bad signature")
+                    call.respondText("Bad signature", status=HttpStatusCode(401, "Unauthorized"))
+                }
+            } ?: run {
+                logger.info("unrecognised runner")
+                call.respondText("Unrecognised runner", status=HttpStatusCode(401, "Unauthorized"))
+            }
+        }
         post("/measures/job/{jobname}") {
             val (metrics, runner, signature) = call.receive<Payload>()
             val jobname = call.parameters.get("jobname")!!
