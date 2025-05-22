@@ -15,10 +15,16 @@ class MessageValidator {
         val keyFactory = KeyFactory.getInstance("EC")
     }
 
+    /**
+     * base64 decoding seems to be bothered by whitespace
+     */
+    private fun removeWhiteSpace(s: String): String =
+        s.replace("\\s+".toRegex(), "")
+
     private fun keyFromBase64(publicKey: String): PublicKey =
         keyFactory.generatePublic(
             X509EncodedKeySpec(
-                Base64.getDecoder().decode(publicKey)
+                Base64.getDecoder().decode(removeWhiteSpace(publicKey))
             )
         )
 
