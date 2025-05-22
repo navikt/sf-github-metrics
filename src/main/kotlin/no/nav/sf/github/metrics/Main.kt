@@ -25,10 +25,19 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
+ * use instead of HttpStatusCode which limits the characters it can use in a
+ * response.
+ */
+data class ForwardResponse(
+    val status: HttpStatusCode,
+    val reason: String,
+)
+
+/**
  * forwards stats for a given job and an optionally specified instance.
  * often the instance is given in the data instead of the path.
  */
-suspend fun forward(body: String?, jobname: String, instance: String? = null): HttpStatusCode {
+suspend fun forward(body: String?, jobname: String, instance: String? = null): ForwardResponse {
     // default to private network https://www.rfc-editor.org/rfc/rfc1918
     val root = System.getenv("PROMGATEADDRESS") ?: "http://172.17.0.3:9091"
     val url = instance?.let {
@@ -39,21 +48,26 @@ suspend fun forward(body: String?, jobname: String, instance: String? = null): H
             contentType(ContentType.Text.Plain)
             setBody(body + "\n") // metrics must end with a newline, just add it
         }
-        logger.info("server responds ${response.status}")
-        if (response.status.value == 400) {
-            return HttpStatusCode(400, "Metrics not accepted by prometheus")
-        } else if (response.status.value == 200) {
-            return HttpStatusCode(200, "OK")
-        } else {
-            logger.error("Unexpected response: ${response.status}")
-            return response.status
+        logger.info("pushgateway responds ${response.status} (${response.bodyAsText()})")
+        return when (response.status.value) {
+            200, 400 -> ForwardResponse(response.status, response.bodyAsText())
+            else -> {
+                logger.error("Unexpected response: ${response.status}: ${response.bodyAsText()}")
+                ForwardResponse(response.status, response.bodyAsText())
+            }
         }
     } catch (ce: ConnectException) {
         logger.error("${ce.stackTraceToString()})")
-        return HttpStatusCode(502, "Failed to connect to pushgateway")
+        return ForwardResponse(
+            HttpStatusCode(502, "Bad gateway"),
+            "Failed to connect to pushgateway"
+        )
     } catch (nrthe: NoRouteToHostException) {
         logger.error("${nrthe.stackTraceToString()})")
-        return HttpStatusCode(502, "No route to host")
+        return ForwardResponse(
+            HttpStatusCode(502, "Bad gateway"),
+            "No route to host"
+        )
     }
 }
 
@@ -100,14 +114,14 @@ fun Application.module() {
             Runners.publicKeys.get(runner)?.let {
                 if (validator.isValid(metrics, it, signature)) {
                     val response = forward(metrics, jobname)
-                    call.respondText(response.description, status=response)
+                    call.respondText(response.reason, status=response.status)
                 } else {
                     logger.info("bad signature")
-                    call.respondText("Bad signature", status=HttpStatusCode(401, "Bad signature"))
+                    call.respondText("Bad signature", status=HttpStatusCode(401, "Unauthorized"))
                 }
             } ?: run {
                 logger.info("unrecognised runner")
-                call.respondText("Unrecognised runner", status=HttpStatusCode(401, "Unrecognised runner"))
+                call.respondText("Unrecognised runner", status=HttpStatusCode(401, "Unauthorized"))
             }
         }
     }
