@@ -133,7 +133,13 @@ sequenceDiagram
     alt verification ok
         sf-github-metrics ->> pushgateway: message
         alt pushgateway ok
-            sf-github-metrics -->> runner: 200
+            alt success
+                pushgateway -->> sf-github-metrics: 200
+                sf-github-metrics -->> runner: 200
+            else malformed input
+                pushgateway -->> sf-github-metrics: 400
+                sf-github-metrics -->> runner: 400
+            end
         else pushgateway unreachable
             sf-github-metrics -->> runner: 502
         end
