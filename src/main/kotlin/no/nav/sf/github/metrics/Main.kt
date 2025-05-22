@@ -110,7 +110,7 @@ fun Application.module() {
         post("/measures/job/{jobname}") {
             val (metrics, runner, signature) = call.receive<Payload>()
             val jobname = call.parameters.get("jobname")!!
-            logger.info("attempting to forward metrics for job $jobname from runner $runner")
+            logger.info("got request to forward metrics from runner $runner for job $jobname")
             Runners.publicKeys.get(runner)?.let {
                 if (validator.isValid(metrics, it, signature)) {
                     val response = forward(metrics, jobname)
