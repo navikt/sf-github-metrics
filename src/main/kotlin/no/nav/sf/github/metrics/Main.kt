@@ -78,10 +78,6 @@ data class Payload(
     val signature: String,
 )
 
-val logger: Logger = LoggerFactory.getLogger("Main")
-val validator = MessageValidator()
-val client = HttpClient(CIO)
-
 /**
  * performs signature validation and forwards metrics to a pushgateway
  */
@@ -135,5 +131,9 @@ fun Application.module() {
         }
     }
 }
+
+val logger: Logger = LoggerFactory.getLogger("Main")
+val validator = MessageValidator()
+val client = HttpClient(CIO)
 
 fun main(args: Array<String>): Unit = EngineMain.main(args)
