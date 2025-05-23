@@ -65,7 +65,8 @@ scrape_configs:
 EOF
 ```
 
-Use this config to run a prometheus instance:
+This config lets prometheus fetch metrics from the pushgateway. Use it to run a
+prometheus instance:
 
 `docker run -p 9090:9090 -v "$(readlink -f etcprometheus)":/etc/prometheus/ prom/prometheus`
 
