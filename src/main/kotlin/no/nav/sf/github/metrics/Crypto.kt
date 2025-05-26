@@ -42,6 +42,9 @@ class MessageValidator {
         } catch(iae: IllegalArgumentException) {
             logger.warn("probably received some invalid base64: ${iae.stackTraceToString()}")
             return false
+        } catch(se: SignatureException) {
+            logger.warn("probably received an empty signature: ${se.stackTraceToString()}")
+            return false
         }
     }
 }
