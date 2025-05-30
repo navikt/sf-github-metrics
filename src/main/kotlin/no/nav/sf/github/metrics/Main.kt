@@ -1,9 +1,11 @@
 package no.nav.sf.github.metrics
 
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -13,8 +15,6 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-
-import io.ktor.util.reflect.typeInfo
 
 import java.net.ConnectException
 import java.net.NoRouteToHostException
