@@ -68,6 +68,12 @@ suspend fun forward(body: String?, jobname: String, instance: String? = null): F
             HttpStatusCode(502, "Bad gateway"),
             "No route to host"
         )
+    } catch (e: Exception) {
+        logger.error("${e.stackTraceToString()})")
+        return ForwardResponse(
+            HttpStatusCode(500, "Internal server error"),
+            "Internal server error"
+        )
     }
 }
 
