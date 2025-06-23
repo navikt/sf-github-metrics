@@ -5,7 +5,7 @@ val junitVersion = "5.13.1"
 val mainClassName = "no.nav.sf.github.metrics.MainKt"
 
 plugins {
-    kotlin("jvm") version "2.1.21"
+    kotlin("jvm") version "2.2.0"
     kotlin("plugin.serialization").version("2.1.20")
 }
 
