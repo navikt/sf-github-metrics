@@ -24,7 +24,7 @@ spec:
   resources:
     requests:
       cpu: 50m
-      memory: 32Mi
+      memory: 128Mi
   observability:
     logging:
       destinations:
@@ -37,3 +37,9 @@ spec:
       rules:
         - application: prometheus-pushgateway
           namespace: nais-system
+  gcp:
+    sqlInstances:
+      - type: POSTGRES_16
+        tier: db-f1-micro
+        databases:
+          - name: pgdb
