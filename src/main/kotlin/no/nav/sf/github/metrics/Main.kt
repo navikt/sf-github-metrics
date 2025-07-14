@@ -77,6 +77,14 @@ suspend fun forward(body: String?, jobname: String, instance: String? = null): F
     }
 }
 
+/**
+ * updates the db and forwards, in that order.
+ */
+suspend fun updateAndForward(body: String, jobname: String, instance: String? = null): ForwardResponse {
+    val newBody = updateStats(jobname, body)
+    return forward(newBody, jobname, instance)
+}
+
 @Serializable
 data class Payload(
     val metrics: String,
@@ -85,14 +93,28 @@ data class Payload(
 )
 
 /**
- * performs signature validation and forwards metrics to a pushgateway
+ * performs signature validation, updates database, and forwards metrics to a
+ * pushgateway
  */
-fun Application.module() {
+suspend fun validateAndUpdateAndForward(payload: Payload, jobname: String, instance: String? = null): ForwardResponse {
+    val (metrics, runner, signature) = payload
+    Runners.publicKeys.get(runner)?.let {
+        if (validator.isValid(metrics, it, signature)) {
+            return updateAndForward(metrics, jobname, instance)
+        } else {
+            logger.info("bad signature")
+            return ForwardResponse(HttpStatusCode(401, "Unauthorized"), "Bad signature")
+        }
+    } ?: run {
+        logger.info("unrecognised runner")
+        return ForwardResponse(HttpStatusCode(401, "Unauthorized"), "Unrecognised runner")
+    }
+}
 
+fun Application.module() {
     install(ContentNegotiation) {
         json()
     }
-
     routing {
         get("/isAlive") {
             call.respondText("Alive!")
@@ -101,39 +123,19 @@ fun Application.module() {
             call.respondText("Ready!")
         }
         post("/measures/job/{jobname}/instance/{instance}") {
-            val (metrics, runner, signature) = call.receive<Payload>()
+            val payload = call.receive<Payload>()
             val jobname = call.parameters.get("jobname")!!
             val instance = call.parameters.get("instance")!!
-            logger.info("got request to forward metrics from runner $runner on instance $instance for job $jobname")
-            Runners.publicKeys.get(runner)?.let {
-                if (validator.isValid(metrics, it, signature)) {
-                    val response = forward(metrics, jobname, instance)
-                    call.respondText(response.reason, status=response.status)
-                } else {
-                    logger.info("bad signature")
-                    call.respondText("Bad signature", status=HttpStatusCode(401, "Unauthorized"))
-                }
-            } ?: run {
-                logger.info("unrecognised runner")
-                call.respondText("Unrecognised runner", status=HttpStatusCode(401, "Unauthorized"))
-            }
+            logger.info("got request to forward metrics from runner ${payload.runner} on instance $instance for job $jobname")
+            val response = validateAndUpdateAndForward(payload, jobname, instance)
+            call.respondText(response.reason, status=response.status)
         }
         post("/measures/job/{jobname}") {
-            val (metrics, runner, signature) = call.receive<Payload>()
+            val payload = call.receive<Payload>()
             val jobname = call.parameters.get("jobname")!!
-            logger.info("got request to forward metrics from runner $runner for job $jobname")
-            Runners.publicKeys.get(runner)?.let {
-                if (validator.isValid(metrics, it, signature)) {
-                    val response = forward(metrics, jobname)
-                    call.respondText(response.reason, status=response.status)
-                } else {
-                    logger.info("bad signature")
-                    call.respondText("Bad signature", status=HttpStatusCode(401, "Unauthorized"))
-                }
-            } ?: run {
-                logger.info("unrecognised runner")
-                call.respondText("Unrecognised runner", status=HttpStatusCode(401, "Unauthorized"))
-            }
+            logger.info("got request to forward metrics from runner ${payload.runner} for job $jobname")
+            val response = validateAndUpdateAndForward(payload, jobname)
+            call.respondText(response.reason, status=response.status)
         }
     }
 }

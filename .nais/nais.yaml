@@ -37,3 +37,10 @@ spec:
       rules:
         - application: prometheus-pushgateway
           namespace: nais-system
+  postgres:
+    cluster:
+      majorVersion: "17"
+      resources:
+        cpu: 100m
+        diskSize: 1Gi
+        memory: 2G
