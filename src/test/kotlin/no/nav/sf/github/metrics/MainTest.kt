@@ -4,20 +4,27 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
+
+import kotlinx.coroutines.runBlocking
+
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
+/**
+ * tests for the entire app, sans routing and validation
+ */
 class MainTest {
-    //@Test
-    //fun `server is up and talks to local prometheus gate server, will fail if prometheus gateway isn't running at ip 0xac110003`() = testApplication {
-    //    application {
-    //        module()
-    //    }
-    //    val response = client.post("/measures/job/foo") {
-    //        contentType(ContentType.Text.Plain)
-    //        setBody("omg wtf")
-    //    }
-    //    assertEquals(HttpStatusCode.OK, response.status)
-    //    assertEquals("success", response.bodyAsText())
-    //}
+    @Test
+    fun happyPath() = runBlocking {
+        val response = updateAndForward(
+            """
+            # TYPE answer gauge
+            answer{scope="life"} 42
+            """.trimMargin(),
+            "xyzzy",
+            null,
+            FakePersistence()
+        )
+        assertEquals(200, response.status.value)
+    }
 }

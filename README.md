@@ -11,6 +11,7 @@ If you want to test locally, you will want to have running:
 - prometheus
 - prometheus pushgateway
 - grafana
+- postgres
 
 Set them up like so:
 
@@ -78,6 +79,12 @@ prometheus instance:
 
 `docker run -p 3000:3000 grafana/grafana-oss`
 
+#### Postgres
+
+Set up a database to your liking on port 5432, and set the environmental
+variables `PGDATABASE`, `PGUSER`, and `PGPASSWORD`. Set them in the current
+shell if running via `java` below, or in the docker file if running via docker.
+
 ### sf-github-metrics
 
 If the docker containers were started in the above order, the gateway should be
@@ -110,7 +117,11 @@ Add the public key to `publicKeys` in `Runners.kt`, using the index `local`.
 
 Now you can run the app:
 
-`./gradlew clean build -x test && docker build . -t sgm && docker run -p 8080:8080 sgm`
+`./gradlew clean build && java -jar ./build/libs/app.jar`
+
+or
+
+`./gradlew clean build && docker build . -t sgm && docker run -p 8080:8080 sgm`
 
 In another shell, in the directory containing your private key, run:
 
@@ -119,7 +130,7 @@ In another shell, in the directory containing your private key, run:
 This will sign the message you pass it and pack it into a JSON payload. We can
 use this to send a metric:
 
-`jay 'answer 42' | tee >(curl -D- -H 'Content-Type: application/json' --data-binary @- http://127.1:8080/measures/job/zyxxy)`
+`jay 'answer{} 42' | tee >(curl -D- -H 'Content-Type: application/json' --data-binary @- http://127.1:8080/measures/job/zyxxy)`
 
 The app should send a 200 response. Create a panel in grafana with the query
 `answer` and the value `42` should promptly show up.
@@ -132,7 +143,9 @@ sequenceDiagram
     runner ->> sf-github-metrics: runner
     runner ->> sf-github-metrics: signature
     alt verification ok
-        sf-github-metrics ->> pushgateway: message
+        sf-github-metrics ->> postgres: message
+        postgres ->> sf-github-metrics: updated message
+        sf-github-metrics ->> pushgateway: updated message
         alt pushgateway ok
             alt success
                 pushgateway -->> sf-github-metrics: 200
