@@ -14,11 +14,11 @@ class Persistence(): IPersistence {
      * gets a connection and sets up tables if necessary
      */
     private fun setupConnection(statsTable: String, typeTable: String): Connection {
-        val pg_db = System.getenv("PGDATABASE")
-        val pg_user = System.getenv("PGUSER")
-        val pg_pass = System.getenv("PGPASSWORD")
-        val pg_host = System.getenv("PGHOST") ?: "localhost"
-        val pg_port = System.getenv("PGPORT") ?: "5432"
+        val pg_db = System.getenv("NAIS_DATABASE_SF_GITHUB_METRICS_PGDB_DATABASE")
+        val pg_user = System.getenv("NAIS_DATABASE_SF_GITHUB_METRICS_PGDB_USERNAME")
+        val pg_pass = System.getenv("NAIS_DATABASE_SF_GITHUB_METRICS_PGDB_PASSWORD")
+        val pg_host = System.getenv("NAIS_DATABASE_SF_GITHUB_METRICS_PGDB_HOST") ?: "localhost"
+        val pg_port = System.getenv("NAIS_DATABASE_SF_GITHUB_METRICS_PGDB_PORT") ?: "5432"
         val url = "jdbc:postgresql://$pg_host:$pg_port/$pg_db"
         val conn: Connection = DriverManager.getConnection(url, pg_user, pg_pass)!!
         val tableSetupSql = """
