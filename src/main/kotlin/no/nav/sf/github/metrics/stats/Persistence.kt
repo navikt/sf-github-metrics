@@ -19,7 +19,8 @@ class Persistence(): IPersistence {
         val pg_pass = System.getenv("NAIS_DATABASE_SF_GITHUB_METRICS_PGDB_PASSWORD")
         val pg_host = System.getenv("NAIS_DATABASE_SF_GITHUB_METRICS_PGDB_HOST") ?: "localhost"
         val pg_port = System.getenv("NAIS_DATABASE_SF_GITHUB_METRICS_PGDB_PORT") ?: "5432"
-        val url = "jdbc:postgresql://$pg_host:$pg_port/$pg_db"
+        val url = System.getenv("NAIS_DATABASE_SF_GITHUB_METRICS_PGDB_JDBC_URL") ?: "jdbc:postgresql://$pg_host:$pg_port/$pg_db"
+        logger.info("hey, let's expose stuff: $url")
         val conn: Connection = DriverManager.getConnection(url, pg_user, pg_pass)!!
         val tableSetupSql = """
             CREATE TABLE IF NOT EXISTS $statsTable (
