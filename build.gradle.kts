@@ -1,7 +1,7 @@
 val ktorVersion = "3.2.2"
 val logbackVersion = "1.5.18"
 val logstashEncoderVersion = "8.1"
-val junitVersion = "5.13.3"
+val junitVersion = "5.13.4"
 val mainClassName = "no.nav.sf.github.metrics.MainKt"
 
 plugins {
