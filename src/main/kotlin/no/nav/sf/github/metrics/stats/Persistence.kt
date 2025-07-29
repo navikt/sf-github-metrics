@@ -10,6 +10,26 @@ import java.sql.Types
 
 class Persistence(): IPersistence {
 
+    companion object {
+        /**
+         * separates lines from a message into their possible forms
+         */
+        internal fun getTypesAndEntriesAndUnparseable(
+            body: String,
+            instance: String?
+        ): Triple<List<Type>, List<Entry>, List<String>> {
+            val lines = body.trim().split("\n").map { it.trim() }
+            val types = lines.filter { Type.isValidLine(it) }.map { Type.parseLine(it) }
+            val entries = lines.filter { Entry.isValidLine(it) }.map { Entry.parseLine(instance, it) }
+            val unparseable = lines.filter { !(
+                it.startsWith("# TYPE") ||
+                Entry.isValidLine(it) ||
+                it == ""
+            )}
+            return Triple(types, entries, unparseable)
+        }
+    }
+
     /**
      * gets a connection and sets up tables if necessary
      */
@@ -115,24 +135,6 @@ class Persistence(): IPersistence {
     }
 
     /**
-     * separates lines from a message into their possible forms
-     */
-    private fun getTypesAndEntriesAndUnparseable(
-        body: String,
-        instance: String?
-    ): Triple<List<Type>, List<Entry>, List<String>> {
-        val lines = body.trim().split("\n").map { it.trim() }
-        val types = lines.filter { Type.isValidLine(it) }.map { Type.parseLine(it) }
-        val entries = lines.filter { Entry.isValidLine(it) }.map { Entry.parseLine(instance, it) }
-        val unparseable = lines.filter { !(
-            it.startsWith("# TYPE") ||
-            Entry.isValidLine(it) ||
-            it == ""
-        )}
-        return Triple(types, entries, unparseable)
-    }
-
-    /**
      * updates stats in database, inserts when not present. counters are increased
      * by the given value, gauges are set to the given value.
      */
@@ -177,7 +179,7 @@ class Persistence(): IPersistence {
         }
         val statsTable = "stats_$job"
         val typeTable = "type_$job"
-        val (types, entries, unparseable) = getTypesAndEntriesAndUnparseable(body, instance)
+        val (types, entries, unparseable) = Persistence.getTypesAndEntriesAndUnparseable(body, instance)
         unparseable.forEach {
             logger.warn("Encountered unparseable line:\n\t$it")
         }
