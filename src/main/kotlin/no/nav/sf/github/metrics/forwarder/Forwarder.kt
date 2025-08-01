@@ -13,6 +13,7 @@ import io.ktor.http.contentType
 
 import java.net.ConnectException
 import java.net.NoRouteToHostException
+import java.net.SocketException
 
 /**
  * use instead of HttpStatusCode which limits the characters it can use in a
@@ -62,6 +63,12 @@ class Forwarder : IForwarder {
             return ForwardResponse(
                 HttpStatusCode(502, "Bad gateway"),
                 "No route to host"
+            )
+        } catch (se: SocketException) {
+            logger.error("${se.stackTraceToString()})")
+            return ForwardResponse(
+                HttpStatusCode(502, "Bad gateway"),
+                "Network is unreachable"
             )
         } catch (e: Exception) {
             logger.error("${e.stackTraceToString()})")
