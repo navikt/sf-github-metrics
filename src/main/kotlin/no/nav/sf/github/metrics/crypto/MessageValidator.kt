@@ -30,7 +30,8 @@ class MessageValidator {
 
     /**
      * ensures message matches signature from a whitelisted key.
-     * TODO: consider also validating the job on which metrics are stored.
+     * TODO: consider also validating the job on which metrics are stored, so
+     * that two runners don't mistakenly use the same job name
      */
     fun isValid(message: String, publicKey: String, signature: String): Boolean {
         try {

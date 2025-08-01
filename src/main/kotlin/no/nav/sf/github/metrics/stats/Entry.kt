@@ -21,7 +21,7 @@ data class Entry(
         }
 
         /**
-         * create distinct representation. name, sorted tags with mandatory
+         * creates distinct representation. name, sorted tags with mandatory
          * instance, and value.
          */
         fun parseLine(instance: String?, line: String): Entry {

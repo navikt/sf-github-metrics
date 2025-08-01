@@ -25,15 +25,15 @@ data class ForwardResponse(
 )
 
 /**
- * forwards data to the pushgateway defined as an environmental variable
+ * forwards data to the pushgateway, the address of which is defined in the
+ * environment.
  */
 class Forwarder : IForwarder {
 
     val client = HttpClient(CIO)
 
     /**
-     * forwards stats for a given job and an optionally specified instance.
-     * often the instance is given in the data instead of the path.
+     * forwards stats for a given job.
      */
     override suspend fun forward(body: String?, jobname: String): ForwardResponse {
         // default to private network https://www.rfc-editor.org/rfc/rfc1918

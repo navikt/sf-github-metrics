@@ -1,7 +1,7 @@
 package no.nav.sf.github.metrics
 
 /**
- * for forwarding to occur, runners' public keys must be here.
+ * runners' public keys must be here in order to allow forwarding
  */
 class Runners: IRunners {
     companion object {

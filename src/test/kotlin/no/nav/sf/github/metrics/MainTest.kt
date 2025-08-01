@@ -29,7 +29,9 @@ import java.security.spec.ECGenParameterSpec
 import java.util.Base64
 
 /**
- * tests for the entire app, sans routing and validation
+ * tests for the entire app. doesn't actually test the _main_ method, but uses
+ * an application with the same module as _main_ calls, but using fake runners,
+ * persistance, and forwarder.
  */
 class MainTest {
 
@@ -62,7 +64,7 @@ class MainTest {
 
     /**
      * end to end test, to the extent possible. tests:
-     * - signature validation (faked)
+     * - signature validation
      * - message parsing
      * - deserialization of types and stat entries
      * - save to db (faked)

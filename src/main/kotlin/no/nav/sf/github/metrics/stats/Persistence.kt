@@ -8,6 +8,9 @@ import java.sql.SQLException
 import java.sql.Statement
 import java.sql.Types
 
+/**
+ * some sort of persistent storage is necessary to increase counters.
+ */
 class Persistence(): IPersistence {
 
     companion object {
@@ -22,7 +25,7 @@ class Persistence(): IPersistence {
             val types = lines.filter { Type.isValidLine(it) }.map { Type.parseLine(it) }
             val entries = lines.filter { Entry.isValidLine(it) }.map { Entry.parseLine(instance, it) }
             val unparseable = lines.filter { !(
-                it.startsWith("# TYPE") ||
+                Type.isValidLine(it) ||
                 Entry.isValidLine(it) ||
                 it == ""
             )}
@@ -31,7 +34,9 @@ class Persistence(): IPersistence {
     }
 
     /**
-     * gets a connection and sets up tables if necessary
+     * gets a connection and sets up tables if necessary. will cause a 500 if
+     * there are problems with the database, which is fine, since there
+     * shouldn't be.
      */
     private fun setupConnection(statsTable: String, typeTable: String): Connection {
         val pg_db = System.getenv("NAIS_DATABASE_SF_GITHUB_METRICS_PGDB_DATABASE")
@@ -82,7 +87,7 @@ class Persistence(): IPersistence {
     }
 
     /**
-     * gets types from the db
+     * gets types for the given names from the db
      */
     private fun getTypes(conn: Connection, typeTable: String, names: List<String>): ResultSet {
         val pstmt = conn.prepareStatement("""
@@ -103,7 +108,7 @@ class Persistence(): IPersistence {
     }
 
     /**
-     * gets stats from the db
+     * gets all stats for the given names from the db
      */
     private fun getStats(conn: Connection, statsTable: String, names: List<String>): ResultSet {
         val pstmt = conn.prepareStatement("""
@@ -171,7 +176,7 @@ class Persistence(): IPersistence {
 
     /**
      * updates database with given stats, returns updated stats each of which
-     * contains an appropriate instance.
+     * contains a tag with its instance.
      */
     override fun updateStats(body: String, job: String, instance: String?): String {
         if ("""[a-zA-Z0-9_]+""".toRegex().matchEntire(job) == null) {

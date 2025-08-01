@@ -1,5 +1,8 @@
 package no.nav.sf.github.metrics
 
+/**
+ * describes a type for a given name, typically counter or gauge.
+ */
 data class Type(val name: String, val type: String) {
     override fun toString() = "# TYPE $name $type"
     companion object {
@@ -11,7 +14,7 @@ data class Type(val name: String, val type: String) {
         }
 
         fun parseLine(line: String): Type {
-            val matchResult = regex.matchEntire(line.trim()) ?: throw IllegalArgumentException("Line format is incorrect: $line")
+            val matchResult = regex.matchEntire(line) ?: throw IllegalArgumentException("Line format is incorrect: $line")
             val (name, type) = matchResult.destructured
             return Type(name, type)
         }

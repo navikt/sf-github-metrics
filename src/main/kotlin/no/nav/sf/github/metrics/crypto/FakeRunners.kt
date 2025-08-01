@@ -1,7 +1,7 @@
 package no.nav.sf.github.metrics
 
 /**
- * allow setting keys at run time
+ * allows setting public keys at run time for testing
  */
 class FakeRunners: IRunners {
     val publicKeys: MutableMap<String, String> = mutableMapOf()

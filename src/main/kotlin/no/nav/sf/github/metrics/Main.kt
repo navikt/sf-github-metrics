@@ -15,6 +15,13 @@ import kotlinx.serialization.Serializable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+@Serializable
+data class Payload(
+    val metrics: String,
+    val runner: String,
+    val signature: String,
+)
+
 /**
  * updates the db and forwards, in that order.
  */
@@ -28,13 +35,6 @@ internal suspend fun updateAndForward(
     val newBody = persistence.updateStats(body, jobname, instance)
     return forwarder.forward(newBody, jobname)
 }
-
-@Serializable
-data class Payload(
-    val metrics: String,
-    val runner: String,
-    val signature: String,
-)
 
 /**
  * performs signature validation, updates database, and forwards metrics to a
