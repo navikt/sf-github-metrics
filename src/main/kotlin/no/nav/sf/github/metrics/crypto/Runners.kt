@@ -1,9 +1,9 @@
 package no.nav.sf.github.metrics
 
 /**
- * for forwarding to occur, runners' public keys must be here.
+ * runners' public keys must be here in order to allow forwarding
  */
-class Runners {
+class Runners: IRunners {
     companion object {
         val publicKeys = mapOf(
             "local" to """
@@ -19,4 +19,6 @@ class Runners {
                 """
         )
     }
+
+    override fun get(index: String) = publicKeys.get(index)
 }

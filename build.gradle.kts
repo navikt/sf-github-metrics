@@ -1,4 +1,6 @@
+val kotlinTestVersion = "2.2.0"
 val ktorVersion = "3.2.3"
+val ktorServerTestVersion = "2.3.13"
 val logbackVersion = "1.5.18"
 val logstashEncoderVersion = "8.1"
 val junitVersion = "5.13.4"
@@ -36,6 +38,8 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:$junitVersion"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("io.ktor:ktor-server-tests:$ktorServerTestVersion")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinTestVersion")
 }
 
 
