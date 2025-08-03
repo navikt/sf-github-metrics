@@ -5,20 +5,12 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.client.statement.*
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
-import io.ktor.server.testing.*
-
-import kotlinx.coroutines.runBlocking
-
-import kotlinx.serialization.json.Json
-
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
+import io.ktor.server.testing.testApplication
 
 import java.security.KeyPair
 import java.security.KeyPairGenerator
@@ -28,10 +20,17 @@ import java.security.interfaces.ECPublicKey
 import java.security.spec.ECGenParameterSpec
 import java.util.Base64
 
+import kotlinx.coroutines.runBlocking
+
+import kotlinx.serialization.json.Json
+
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+
 /**
  * tests for the entire app. doesn't actually test the _main_ method, but uses
  * an application with the same module as _main_ calls, but using fake runners,
- * persistance, and forwarder.
+ * persistence, and forwarder.
  */
 class MainTest {
 

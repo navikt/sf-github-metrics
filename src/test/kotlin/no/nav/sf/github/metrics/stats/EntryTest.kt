@@ -1,3 +1,12 @@
+package no.nav.sf.github.metrics
+
+import kotlin.test.assertTrue
+import kotlin.test.fail
+
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+
 /**
  * Here are some tests covering all possible cases for Entry's parseLine method.
  * The tests cover:
@@ -8,13 +17,6 @@
  * - With instance unspecified, or given in tags, or given in argument
  * oh yeah and copilot attempted to write this obviously
  */
-package no.nav.sf.github.metrics
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
-import kotlin.test.assertTrue
-import kotlin.test.fail
-
 class EntryTest {
 
     @Test

@@ -1,10 +1,12 @@
 package no.nav.sf.github.metrics
 
-import java.security.*
+import java.security.KeyFactory
+import java.security.PublicKey
+import java.security.Signature
+import java.security.SignatureException
 import java.security.spec.X509EncodedKeySpec
+
 import java.util.Base64
-import javax.crypto.*
-import javax.crypto.spec.SecretKeySpec
 
 /**
  * ensures that a given message's signature is valid.
