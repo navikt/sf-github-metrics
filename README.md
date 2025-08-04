@@ -81,8 +81,9 @@ prometheus instance:
 
 #### Postgres
 
-Set up a database to your liking on port 5432, and set the environmental
-variables `NAIS_DATABASE_SF_GITHUB_METRICS_PGDB_DATABASE`,
+Set up a database to your liking on port 5432, along with a user and password,
+and set the corresponding environmental variables
+`NAIS_DATABASE_SF_GITHUB_METRICS_PGDB_DATABASE`,
 `NAIS_DATABASE_SF_GITHUB_METRICS_PGDB_USERNAME`, and
 `NAIS_DATABASE_SF_GITHUB_METRICS_PGDB_PASSWORD`. Set them in the current shell
 if running via `java` below, or in the docker file if running via docker.
@@ -127,15 +128,22 @@ or
 
 In another shell, in the directory containing your private key, run:
 
-`jay() { sig=$(printf %s "$1" | openssl dgst -sha256 -sign private.pem -out - | base64 -w0); jq --compact-output --null-input --arg msg "$1" --arg runner local --arg sig "$sig" '{"metrics":$msg,"runner":$runner,"signature":$sig}'; }`
+`sendmetric() { sig=$(printf %s "$1" | openssl dgst -sha256 -sign private.pem -out - | base64 -w0); jq --compact-output --null-input --arg msg "$1" --arg runner local --arg sig "$sig" '{"metrics":$msg,"runner":$runner,"signature":$sig}'; }`
 
 This will sign the message you pass it and pack it into a JSON payload. We can
 use this to send a metric:
 
-`jay 'answer{scope="life"} 42' | tee >(curl -D- -H 'Content-Type: application/json' --data-binary @- http://127.1:8080/measures/job/zyxxy)`
+`sendmetric 'answer{scope="life"} 42' | tee >(curl -D- -H 'Content-Type: application/json' --data-binary @- http://127.1:8080/measures/job/zyxxy)`
 
 The app should send a 200 response. Create a panel in grafana with the query
 `answer` and the value `42` should promptly show up.
+
+## Usage
+
+Follow the [keys](#keys) and [testing](#testing) steps above, but this time
+adding the private key to a Github secret. Use this key in a Github action or
+workflow to sign the message. Make sure the name you have given the key in
+`Runners.kt` matches the one in the JSON payload.
 
 ## Anatomy of a call
 
