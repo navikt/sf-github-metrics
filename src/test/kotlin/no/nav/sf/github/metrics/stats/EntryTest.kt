@@ -24,7 +24,7 @@ class EntryTest {
         val line = "metric{name=\"value\",tag1=\"value1\"} 123.45"
         val entry = Entry.parseLine(null, line)
         assertEquals("metric", entry.name)
-        assertEquals(listOf(Tag("instance", "default"), Tag("name", "value"), Tag("tag1", "value1")), entry.tags)
+        assertEquals(listOf(Tag("instance", ""), Tag("name", "value"), Tag("tag1", "value1")), entry.tags)
         assertEquals(123.45, entry.value)
     }
 
@@ -33,7 +33,7 @@ class EntryTest {
         val line = "metric{} 0.0"
         val entry = Entry.parseLine(null, line)
         assertEquals("metric", entry.name)
-        assertEquals(listOf(Tag("instance", "default")), entry.tags)
+        assertEquals(listOf(Tag("instance", "")), entry.tags)
         assertEquals(0.0, entry.value)
     }
 
@@ -42,7 +42,7 @@ class EntryTest {
         val line = "metric{tag=\"value\"} 42.0"
         val entry = Entry.parseLine(null, line)
         assertEquals("metric", entry.name)
-        assertEquals(listOf(Tag("instance", "default"), Tag("tag", "value")), entry.tags)
+        assertEquals(listOf(Tag("instance", ""), Tag("tag", "value")), entry.tags)
         assertEquals(42.0, entry.value)
     }
 
@@ -51,7 +51,7 @@ class EntryTest {
         val line = "metric{tag2=\"value2\",tag1=\"value1\"} 99.99"
         val entry = Entry.parseLine(null, line)
         assertEquals("metric", entry.name)
-        assertEquals(listOf(Tag("instance", "default"), Tag("tag1", "value1"), Tag("tag2", "value2")), entry.tags)
+        assertEquals(listOf(Tag("instance", ""), Tag("tag1", "value1"), Tag("tag2", "value2")), entry.tags)
         assertEquals(99.99, entry.value)
     }
 
@@ -61,7 +61,7 @@ class EntryTest {
         val entry = Entry.parseLine(null, line)
         assertEquals("metric", entry.name)
         assertEquals(
-            listOf(Tag("instance", "default"), Tag("tag1", ""), Tag("tag2", "value2")),
+            listOf(Tag("instance", ""), Tag("tag1", ""), Tag("tag2", "value2")),
             entry.tags
         )
         assertEquals(15.0, entry.value)
@@ -73,7 +73,7 @@ class EntryTest {
         val entry = Entry.parseLine(null, line)
         assertEquals("metric", entry.name)
         assertEquals(
-            listOf(Tag("instance", "default"), Tag("tag1", "  leading space"), Tag("tag2", "trailing space  ")),
+            listOf(Tag("instance", ""), Tag("tag1", "  leading space"), Tag("tag2", "trailing space  ")),
             entry.tags
         )
         assertEquals(35.0, entry.value)

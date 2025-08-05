@@ -93,7 +93,7 @@ class MainTest {
         assertEquals(200, response.status.value)
         assertEquals(42.0, persistence.getEntry(
             "answer",
-            "base=\"13\",instance=\"default\""
+            "base=\"13\",instance=\"\""
         ))
         assertEquals("counter", persistence.types["question"])
     }

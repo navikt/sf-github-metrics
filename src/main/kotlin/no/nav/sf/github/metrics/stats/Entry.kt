@@ -37,16 +37,17 @@ data class Entry(
                     Tag(key.trim(), value.trim().removeSurrounding("\""))
                 }
             }
-            // always set instance. priority:
+            // instance is required. if it's not set in advance, prometheus will
+            // make something up, so we always set it. priority:
             // 1. already in tag
             // 2. from endpoint
-            // 3. "default"
+            // 3. blank
             val tagsWithInstance: List<Tag> = tags + if ("instance" in tags.map { it.key }) {
                 listOf()
             } else if (instance != null) {
                 listOf(Tag("instance", instance))
             } else {
-                listOf(Tag("instance", "default"))
+                listOf(Tag("instance", ""))
             }
             val sortedTags = tagsWithInstance.sortedBy { it.key }
             val doubleValue = value.toDouble()
