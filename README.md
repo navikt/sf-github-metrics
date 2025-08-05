@@ -145,6 +145,28 @@ adding the private key to a Github secret. Use this key in a Github action or
 workflow to sign the message. Make sure the name you have given the key in
 `Runners.kt` matches the one in the JSON payload.
 
+## Example
+
+```
+$ echo '{"runner":"local","metrics":"# TYPE gold counter\ngold{athlete=\"Spitz\"} 2\n# TYPE age gauge\nage{athlete=\"Spitz\"} 18","signature":"..."}' | curl -H 'Content-Type: application/json' --data-binary @- http://127.1:8080/measures/job/olympics
+
+$ echo 'SELECT name, type FROM type_olympics; SELECT name, tags, value FROM stats_olympics;' | psql "$NAIS_DATABASE_SF_GITHUB_METRICS_PGDB_DATABASE"
+ gold | counter
+ age  | gauge
+
+ gold | athlete="Spitz",instance="" |     2
+ age  | athlete="Spitz",instance="" |    18
+
+$ echo '{"runner":"local","metrics":"# TYPE gold counter\ngold{athlete=\"Spitz\"} 7\n# TYPE age gauge\nage{athlete=\"Spitz\"} 22","signature":"..."}' | curl -H 'Content-Type: application/json' --data-binary @- http://127.1:8080/measures/job/olympics
+
+$ echo 'SELECT name, type FROM type_olympics; SELECT name, tags, value FROM stats_olympics;' | psql "$NAIS_DATABASE_SF_GITHUB_METRICS_PGDB_DATABASE"
+ gold | counter
+ age  | gauge
+
+ gold | athlete="Spitz",instance="" |     9
+ age  | athlete="Spitz",instance="" |    22
+```
+
 ## Anatomy of a call
 
 ```mermaid
