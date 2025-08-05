@@ -27,8 +27,6 @@ data class Entry(
         fun parseLine(instance: String?, line: String): Entry {
             val matchResult = regex.matchEntire(line)!!
             val (name, tagString, value) = matchResult.destructured
-            // parse into Tag objects and sort by key in order to avoid
-            // duplicates
             val tags: List<Tag> = if (tagString.trim() == "") {
                 listOf()
             } else {
@@ -49,6 +47,7 @@ data class Entry(
             } else {
                 listOf(Tag("instance", ""))
             }
+            // sort by key in order to avoid duplicates
             val sortedTags = tagsWithInstance.sortedBy { it.key }
             val doubleValue = value.toDouble()
             return Entry(name, sortedTags, doubleValue)
