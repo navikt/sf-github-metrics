@@ -17,6 +17,10 @@ class Runners: IRunners {
                 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEw2sAXjrnJlDvylLNDNjNUXQDdRjf
                 +19xyU5uLP35yE7yx7g6ldCvjp768z520lRLENRG6RR138TTQYg02l/luw==
             """,
+            "crm-workflow-base" to """
+                MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEAJuQ3vM/9ON/yztjF+5i79RMMW39
+                JYZnWL2sy1xeABN+t2Pow34/cqhN4TbyRV54tAFn/FafAA5ZZDCVswRSmA==
+            """,
         )
     }
 
