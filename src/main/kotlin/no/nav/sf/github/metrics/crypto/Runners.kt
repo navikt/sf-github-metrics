@@ -21,6 +21,10 @@ class Runners: IRunners {
                 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEAJuQ3vM/9ON/yztjF+5i79RMMW39
                 JYZnWL2sy1xeABN+t2Pow34/cqhN4TbyRV54tAFn/FafAA5ZZDCVswRSmA==
             """,
+            "crm-platform-base" to """
+                MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEKjKn/7mBRCGUHB7wZAbUnn4vtkRP
+                BQxn5S0Nhe/KrdrG/uY6mWa6OOmuOTPQDNHVK1b/rv5KSaF0Wg/JHL6W2g==
+            """,
         )
     }
 
