@@ -32,7 +32,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashEncoderVersion")
 
-    implementation("org.postgresql:postgresql:42.7.7")
+    implementation("org.postgresql:postgresql:42.7.8")
 
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation(platform("org.junit:junit-bom:$junitVersion"))
