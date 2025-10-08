@@ -1,5 +1,5 @@
 val kotlinTestVersion = "2.2.20"
-val ktorVersion = "3.3.0"
+val ktorVersion = "3.3.1"
 val ktorServerTestVersion = "2.3.13"
 val logbackVersion = "1.5.19"
 val logstashEncoderVersion = "8.1"
