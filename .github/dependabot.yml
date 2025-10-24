@@ -14,15 +14,19 @@ updates:
     directory: "/"
     schedule:
       interval: daily
+    cooldown:
+      default-days: 4
 
   - package-ecosystem: gradle
     directory: "/"
     schedule:
       interval: daily
-#    registries:
-#      - mvn-repo
+    cooldown:
+      default-days: 4
 
   - package-ecosystem: docker
     directory: "/"
     schedule:
       interval: daily
+    cooldown:
+      default-days: 4
