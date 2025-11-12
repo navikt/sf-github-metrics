@@ -13,6 +13,7 @@ import org.http4k.routing.routes
 import org.http4k.server.Http4kServer
 import org.http4k.server.Netty
 import org.http4k.server.asServer
+import java.io.File
 
 class Application {
     private val log = KotlinLogging.logger { }
@@ -32,6 +33,11 @@ class Application {
             "/internal/metrics" bind Method.GET to Metrics.metricsHttpHandler,
             "/internal/hello" bind Method.GET to { Response(OK).body("Hello") },
             "/internal/secrethello" authbind Method.GET to { Response(OK).body("Secret Hello") },
+            "/webhook" bind Method.GET to { Response(OK).body("Up") },
+            "/webhook" bind Method.POST to { request ->
+                File("/tmp/latestWebhookCall").writeText("$currentDateTime\n" + request.toMessage())
+                Response(OK)
+            },
         )
 
     /**
