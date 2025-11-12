@@ -21,7 +21,7 @@ shadowJar {
 }
 
 application {
-    mainClassName = 'no.nav.template.BootstrapKt'
+    mainClass = 'no.nav.sf.github.metrics.app.BootstrapKt'
 }
 
 repositories {
