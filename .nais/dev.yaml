@@ -30,7 +30,7 @@ spec:
       cpu: 10m
       memory: 512Mi
   ingresses:
-    - "https://sf-mellomvare.template.intern.dev.nav.no"
+    - "https://sf-github-metrics-app.intern.dev.nav.no"
   azure:
     application:
       enabled: true
