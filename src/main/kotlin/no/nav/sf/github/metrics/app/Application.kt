@@ -1,5 +1,7 @@
 package no.nav.sf.github.metrics.app
 
+import com.google.gson.Gson
+import com.google.gson.JsonObject
 import mu.KotlinLogging
 import no.nav.sf.github.metrics.app.token.AuthRouteBuilder
 import no.nav.sf.github.metrics.app.token.DefaultTokenValidator
@@ -7,6 +9,8 @@ import no.nav.sf.github.metrics.app.token.MockTokenValidator
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Response
+import org.http4k.core.Status
+import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.OK
 import org.http4k.routing.bind
 import org.http4k.routing.routes
@@ -14,9 +18,19 @@ import org.http4k.server.Http4kServer
 import org.http4k.server.Netty
 import org.http4k.server.asServer
 import java.io.File
+import java.time.Duration
+import java.time.Instant
+import java.util.concurrent.ConcurrentHashMap
 
 class Application {
     private val log = KotlinLogging.logger { }
+
+    // Gson instance
+    val gson = Gson()
+
+    // To handle parallel runs
+    // Key: Run ID  | Value: Start time
+    val workflowStartTimes = ConcurrentHashMap<Long, Instant>()
 
     val local: Boolean = System.getenv(env_NAIS_CLUSTER_NAME) == null
 
@@ -37,7 +51,8 @@ class Application {
             "/internal/secrethello" authbind Method.GET to { Response(OK).body("Secret Hello") },
             "/webhook" bind Method.GET to { Response(OK).body("Up") },
             "/webhook" bind Method.POST to { request ->
-                log.info("Receieved Webhook. Body: ${request.bodyString()}")
+                log.info("Receieved Webhook event")
+                // log.info("Receieved Webhook. Body: ${request.bodyString()}")
                 File("/tmp/latestWebhookCall").writeText("$currentDateTime\n" + request.toMessage())
                 Response(OK)
             },
@@ -51,5 +66,52 @@ class Application {
     fun start() {
         log.info { "Starting in cluster $cluster" }
         apiServer(8080).start()
+    }
+
+    val webhookHandler: HttpHandler = { request ->
+        try {
+            val body = request.bodyString()
+            log.info("Received Webhook. Body: $body")
+
+            val payload = gson.fromJson(body, JsonObject::class.java)
+            val eventType = request.header("X-GitHub-Event") ?: "unknown"
+
+            // Only handle workflow_run events
+            if (eventType == "workflow_run") {
+                val workflowRun = payload.getAsJsonObject("workflow_run")
+                val runId = workflowRun.get("id")?.asLong
+                val status = workflowRun.get("status")?.asString // in_progress / completed
+                val conclusion = workflowRun.get("conclusion")?.asString // success / failure / cancelled
+                val runStartedAt = Instant.parse(workflowRun.get("run_started_at")!!.asString)
+                val updatedAt = Instant.parse(workflowRun.get("updated_at")!!.asString)
+
+                // Track start time for parallel runs
+                if (status == "in_progress" && runId != null) {
+                    workflowStartTimes[runId] = runStartedAt
+                    log.info("Workflow run $runId started at $runStartedAt")
+                }
+
+                // When workflow ends, compute duration
+                if (status == "completed" && runId != null) {
+                    val startTime = workflowStartTimes[runId] ?: runStartedAt // fallback
+                    val durationSeconds = Duration.between(startTime, updatedAt).seconds
+
+                    when (conclusion) {
+                        "success" -> log.info("SUCCESS: Run $runId took $durationSeconds sec")
+                        "failure" -> log.info("FAILED: Run $runId took $durationSeconds sec")
+                        "cancelled" -> log.info("CANCELLED: Run $runId took $durationSeconds sec")
+                        else -> log.warn("Run $runId completed with unknown conclusion: $conclusion")
+                    }
+
+                    // Clean up memory
+                    workflowStartTimes.remove(runId)
+                }
+            }
+
+            Response(OK)
+        } catch (e: Exception) {
+            log.error("Error handling webhook", e)
+            Response(INTERNAL_SERVER_ERROR)
+        }
     }
 }
