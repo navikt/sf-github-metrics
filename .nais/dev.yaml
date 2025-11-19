@@ -48,8 +48,8 @@ spec:
 #        - application: salesforce
 #          namespace: teamcrm
 #          cluster: dev-external
-#  envFrom:
-#    - secret: template
+  envFrom:
+    - secret: webhook-secret
   env:
     - name: AN_ENV
       value: "a value in dev"

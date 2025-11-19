@@ -9,6 +9,8 @@ const val env_AZURE_OPENID_CONFIG_TOKEN_ENDPOINT = "AZURE_OPENID_CONFIG_TOKEN_EN
 
 const val env_NAIS_CLUSTER_NAME = "NAIS_CLUSTER_NAME"
 
+const val secret_WEBHOOK_SECRET = "WEBHOOK_SECRET"
+
 /**
  * Shortcut for fetching environment variables
  */

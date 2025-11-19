@@ -24,6 +24,8 @@ class Application {
 
     val cluster = if (local) "local" else env(env_NAIS_CLUSTER_NAME)
 
+    val webhookSecret = env(secret_WEBHOOK_SECRET)
+
     fun apiServer(port: Int): Http4kServer = api().asServer(Netty(port))
 
     fun api(): HttpHandler =
@@ -35,6 +37,7 @@ class Application {
             "/internal/secrethello" authbind Method.GET to { Response(OK).body("Secret Hello") },
             "/webhook" bind Method.GET to { Response(OK).body("Up") },
             "/webhook" bind Method.POST to { request ->
+                log.info("Receieved Webhook. Body: ${request.bodyString()}")
                 File("/tmp/latestWebhookCall").writeText("$currentDateTime\n" + request.toMessage())
                 Response(OK)
             },
