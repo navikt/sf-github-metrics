@@ -21,6 +21,8 @@ import java.io.File
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
 
 class Application {
     private val log = KotlinLogging.logger { }
@@ -71,13 +73,26 @@ class Application {
     val webhookHandler: HttpHandler = { request ->
         try {
             val body = request.bodyString()
-            log.info("Received Webhook. Body: $body")
+            val signatureHeader = request.header("x-hub-signature-256")
+            val secret = webhookSecret // already loaded from env()
+
+            val computedHash = "sha256=" + hmacSha256(secret, body)
+
+            val verified = computedHash == signatureHeader
+
+            if (verified) {
+                log.info("Received Webhook. Webhook signature VERIFIED! 🟢")
+            } else {
+                log.warn("Received Webhook. Webhook signature NOT verified 🔴 - Expected: $computedHash - Got: $signatureHeader ")
+            }
 
             val payload = gson.fromJson(body, JsonObject::class.java)
             val eventType = request.header("X-GitHub-Event") ?: "unknown"
 
             // Only handle workflow_run events
             if (eventType == "workflow_run") {
+                log.info("Workflow run event registered")
+                File("Workflow_run_events").appendText(request.bodyString() + "\n\n")
                 val workflowRun = payload.getAsJsonObject("workflow_run")
                 val runId = workflowRun.get("id")?.asLong
                 val status = workflowRun.get("status")?.asString // in_progress / completed
@@ -113,5 +128,20 @@ class Application {
             log.error("Error handling webhook", e)
             Response(INTERNAL_SERVER_ERROR)
         }
+    }
+
+    fun hmacSha256(
+        secret: String,
+        message: String,
+    ): String {
+        val algorithm = "HmacSHA256"
+        val mac = Mac.getInstance(algorithm)
+        val secretKey = SecretKeySpec(secret.toByteArray(), algorithm)
+        mac.init(secretKey)
+
+        val hashBytes = mac.doFinal(message.toByteArray())
+
+        // Convert to hex string
+        return hashBytes.joinToString("") { "%02x".format(it) }
     }
 }
