@@ -93,7 +93,7 @@ class Application {
             // Only handle workflow_run events
             if (eventType == "workflow_run") {
                 log.info("Workflow run event registered")
-                File("Workflow_run_events").appendText(request.bodyString() + "\n\n")
+                File("/tmp/Workflow_run_events").appendText(request.bodyString() + "\n\n")
                 val workflowRun = payload.getAsJsonObject("workflow_run")
                 val runId = workflowRun.get("id")?.asLong
                 val status = workflowRun.get("status")?.asString // in_progress / completed
