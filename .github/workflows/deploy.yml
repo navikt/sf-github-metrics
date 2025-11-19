@@ -10,7 +10,6 @@ jobs:
       - uses: step-security/harden-runner@c6295a65d1254861815972266d5933fd6e532bdf  # v2.11.
         with:
           egress-policy: audit
-      - uses: actions/checkout@<sha>
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
