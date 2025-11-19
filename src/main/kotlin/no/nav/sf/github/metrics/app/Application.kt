@@ -95,32 +95,35 @@ class Application {
                 log.info("Workflow run event registered")
                 File("/tmp/Workflow_run_events").appendText(request.bodyString() + "\n\n")
                 val workflowRun = payload.getAsJsonObject("workflow_run")
-                val runId = workflowRun.get("id")?.asLong
-                val status = workflowRun.get("status")?.asString // in_progress / completed
-                val conclusion = workflowRun.get("conclusion")?.asString // success / failure / cancelled
-                val runStartedAt = Instant.parse(workflowRun.get("run_started_at")!!.asString)
-                val updatedAt = Instant.parse(workflowRun.get("updated_at")!!.asString)
+                val runId = workflowRun.get("id")?.takeIf { !it.isJsonNull }?.asLong
+                val status = workflowRun.get("status")?.takeIf { !it.isJsonNull }?.asString // in_progress / completed
+                val conclusion = workflowRun.get("conclusion")?.takeIf { !it.isJsonNull }?.asString // success / failure / cancelled
 
-                // Track start time for parallel runs
-                if (status == "in_progress" && runId != null) {
-                    workflowStartTimes[runId] = runStartedAt
-                    log.info("Workflow run $runId started at $runStartedAt")
-                }
+                if (conclusion != null) {
+                    val runStartedAt = Instant.parse(workflowRun.get("run_started_at")!!.asString)
+                    val updatedAt = Instant.parse(workflowRun.get("updated_at")!!.asString)
 
-                // When workflow ends, compute duration
-                if (status == "completed" && runId != null) {
-                    val startTime = workflowStartTimes[runId] ?: runStartedAt // fallback
-                    val durationSeconds = Duration.between(startTime, updatedAt).seconds
-
-                    when (conclusion) {
-                        "success" -> log.info("SUCCESS: Run $runId took $durationSeconds sec")
-                        "failure" -> log.info("FAILED: Run $runId took $durationSeconds sec")
-                        "cancelled" -> log.info("CANCELLED: Run $runId took $durationSeconds sec")
-                        else -> log.warn("Run $runId completed with unknown conclusion: $conclusion")
+                    // Track start time for parallel runs
+                    if (status == "in_progress" && runId != null) {
+                        workflowStartTimes[runId] = runStartedAt
+                        log.info("Workflow run $runId started at $runStartedAt")
                     }
 
-                    // Clean up memory
-                    workflowStartTimes.remove(runId)
+                    // When workflow ends, compute duration
+                    if (status == "completed" && runId != null) {
+                        val startTime = workflowStartTimes[runId] ?: runStartedAt // fallback
+                        val durationSeconds = Duration.between(startTime, updatedAt).seconds
+
+                        when (conclusion) {
+                            "success" -> log.info("SUCCESS: Run $runId took $durationSeconds sec")
+                            "failure" -> log.info("FAILED: Run $runId took $durationSeconds sec")
+                            "cancelled" -> log.info("CANCELLED: Run $runId took $durationSeconds sec")
+                            else -> log.warn("Run $runId completed with unknown conclusion: $conclusion")
+                        }
+
+                        // Clean up memory
+                        workflowStartTimes.remove(runId)
+                    }
                 }
             }
 
