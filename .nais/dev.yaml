@@ -1,7 +1,7 @@
 apiVersion: "nais.io/v1alpha1"
 kind: "Application"
 metadata:
-  name: template
+  name: sf-github-metrics-app
   namespace: teamcrm
   labels:
     team: teamcrm
@@ -31,6 +31,7 @@ spec:
       memory: 512Mi
   ingresses:
     - "https://sf-github-metrics-app.intern.dev.nav.no"
+    - "https://sf-github-metrics-app.ekstern.dev.nav.no"
   azure:
     application:
       enabled: true
