@@ -52,12 +52,7 @@ class Application {
             "/internal/hello" bind Method.GET to { Response(OK).body("Hello") },
             "/internal/secrethello" authbind Method.GET to { Response(OK).body("Secret Hello") },
             "/webhook" bind Method.GET to { Response(OK).body("Up") },
-            "/webhook" bind Method.POST to { request ->
-                log.info("Receieved Webhook event")
-                // log.info("Receieved Webhook. Body: ${request.bodyString()}")
-                File("/tmp/latestWebhookCall").writeText("$currentDateTime\n" + request.toMessage())
-                Response(OK)
-            },
+            "/webhook" bind Method.POST to webhookHandler,
         )
 
     /**
@@ -71,6 +66,10 @@ class Application {
     }
 
     val webhookHandler: HttpHandler = { request ->
+        log.info("Receieved Webhook event")
+        // log.info("Receieved Webhook. Body: ${request.bodyString()}")
+        File("/tmp/latestWebhookCall").writeText("$currentDateTime\n" + request.toMessage())
+
         try {
             val body = request.bodyString()
             val signatureHeader = request.header("x-hub-signature-256")
