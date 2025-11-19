@@ -87,7 +87,9 @@ class Application {
             }
 
             val payload = gson.fromJson(body, JsonObject::class.java)
-            val eventType = request.header("X-GitHub-Event") ?: "unknown"
+            val eventType = request.header("x-github-event") ?: "unknown"
+
+            log.info("Github header event type: $eventType")
 
             // Only handle workflow_run events
             if (eventType == "workflow_run") {
