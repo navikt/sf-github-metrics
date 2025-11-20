@@ -1,6 +1,7 @@
 package no.nav.sf.github.metrics.app
 
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import mu.KotlinLogging
 import no.nav.sf.github.metrics.app.token.AuthRouteBuilder
@@ -29,10 +30,13 @@ class Application {
 
     // Gson instance
     val gson = Gson()
+    val gsonPretty = GsonBuilder().setPrettyPrinting().create()
 
     // To handle parallel runs
     // Key: Run ID  | Value: Start time
     val workflowStartTimes = ConcurrentHashMap<Long, Instant>()
+
+    val workflowMessages: MutableMap<Long, MutableList<String>> = mutableMapOf()
 
     val local: Boolean = System.getenv(env_NAIS_CLUSTER_NAME) == null
 
@@ -49,6 +53,7 @@ class Application {
             "/internal/isAlive" bind Method.GET to { Response(OK) },
             "/internal/isReady" bind Method.GET to { Response(OK) },
             "/internal/metrics" bind Method.GET to Metrics.metricsHttpHandler,
+            "/internal/gui" bind Method.GET to guiHandler,
             "/internal/hello" bind Method.GET to { Response(OK).body("Hello") },
             "/internal/secrethello" authbind Method.GET to { Response(OK).body("Secret Hello") },
             "/webhook" bind Method.GET to { Response(OK).body("Up") },
@@ -91,11 +96,24 @@ class Application {
             log.info("Github header event type: $eventType")
 
             // Only handle workflow_run events
-            if (eventType == "workflow_run") {
+            if (eventType == "push") {
+                File("/tmp/push_events").appendText(request.bodyString() + "\n\n")
+            } else if (eventType == "workflow_job") {
+                val jobRun = payload.getAsJsonObject("workflow_job")
+                val runId = jobRun.get("run_id")?.takeIf { !it.isJsonNull }?.asLong
+                if (runId != null) {
+                    if (!workflowMessages.contains(runId)) workflowMessages[runId] = mutableListOf()
+                    workflowMessages[runId]!!.add(gsonPretty.toJson(payload))
+                }
+            } else if (eventType == "workflow_run") {
                 log.info("Workflow run event registered")
                 File("/tmp/Workflow_run_events").appendText(request.bodyString() + "\n\n")
                 val workflowRun = payload.getAsJsonObject("workflow_run")
                 val runId = workflowRun.get("id")?.takeIf { !it.isJsonNull }?.asLong
+                if (runId != null) {
+                    if (!workflowMessages.contains(runId)) workflowMessages[runId] = mutableListOf()
+                    workflowMessages[runId]!!.add(gsonPretty.toJson(payload))
+                }
                 val status = workflowRun.get("status")?.takeIf { !it.isJsonNull }?.asString // in_progress / completed
                 val conclusion = workflowRun.get("conclusion")?.takeIf { !it.isJsonNull }?.asString // success / failure / cancelled
 
@@ -147,5 +165,46 @@ class Application {
 
         // Convert to hex string
         return hashBytes.joinToString("") { "%02x".format(it) }
+    }
+
+    val guiHandler: HttpHandler = { _ ->
+        val html =
+            buildString {
+                append("<html><head>")
+                append(
+                    """
+            <style>
+                details { margin: 8px 0; }
+                summary { cursor: pointer; font-weight: bold; }
+                pre { background: #f4f4f4; padding: 8px; border-radius: 4px; }
+            </style>
+        """,
+                )
+                append("</head><body>")
+                append("<h1>Workflow Messages</h1>")
+
+                if (workflowMessages.isEmpty()) {
+                    append("<p>No messages received yet.</p>")
+                } else {
+                    workflowMessages.forEach { (id, messages) ->
+                        append("<details>")
+                        append("<summary>Workflow ID: $id (${messages.size} events)</summary>")
+
+                        messages.forEach { msg ->
+                            val type = if (msg.contains("workflow_job")) "Job" else "Run"
+                            append("<details style='margin-left:20px;'>")
+                            append("<summary>$type event</summary>")
+                            append("<pre>$msg</pre>")
+                            append("</details>")
+                        }
+
+                        append("</details>")
+                    }
+                }
+
+                append("</body></html>")
+            }
+
+        Response(OK).body(html).header("Content-Type", "text/html")
     }
 }
