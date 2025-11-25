@@ -335,12 +335,12 @@ class Application {
                             if (event.action != "") {
                                 val actionColor =
                                     when (event.action) {
-                                        "requested" -> "#fefcbf" // light yellow
-                                        "completed" -> "#c6f6d5" // light green
-                                        "in_progress" -> "#bee3f8" // light blue
+                                        "requested" -> "#ede600" // yellow
+                                        "completed" -> "#00f04b" // green
+                                        "in_progress" -> "#59c3ff" // blue
                                         "opened" -> "#fbb6ce" // pink
                                         "closed" -> "#fed7d7" // light red
-                                        else -> "#e2e8f0"
+                                        else -> "#a6acb5"
                                     }
                                 append("<span class='pill-secondary' style='border:1px solid $actionColor;'>${event.action}</span>")
                             }
