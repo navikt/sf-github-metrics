@@ -107,7 +107,7 @@ class Application {
 
             allEvents
                 .getOrPut(repoName) { mutableListOf() }
-                .add(EventEntry(timestamp, eventType, gson.toJson(payload))) // or your own pretty string
+                .add(EventEntry(timestamp, eventType, gsonPretty.toJson(payload))) // or your own pretty string
 
             log.info("Github header event type: $eventType")
 
@@ -242,7 +242,7 @@ class Application {
                     events.forEach { ev ->
                         append(
                             """<details style="margin-left:20px">
-                    <summary>${ev.timestamp} | <code>${ev.type}</code></summary>
+                    <summary><code>${ev.type}</code> | ${ev.timestamp}</summary>
                     <pre>${ev.jsonPretty}</pre>
                 </details>""",
                         )
