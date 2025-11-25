@@ -342,7 +342,7 @@ class Application {
                                         "closed" -> "#fed7d7" // light red
                                         else -> "#e2e8f0"
                                     }
-                                append("<span class='pill-secondary' style='background:$actionColor;'>${event.action}</span>")
+                                append("<span class='pill-secondary' style='border:1px solid $actionColor;'>${event.action}</span>")
                             }
 
                             append("${event.timestamp}</summary>")
