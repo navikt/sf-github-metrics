@@ -38,6 +38,8 @@ class Application {
 
     val workflowMessages: MutableMap<Long, MutableList<String>> = mutableMapOf()
 
+    val allEvents: MutableMap<String, MutableList<EventEntry>> = mutableMapOf()
+
     val local: Boolean = System.getenv(env_NAIS_CLUSTER_NAME) == null
 
     val tokenValidator = if (local) MockTokenValidator() else DefaultTokenValidator()
@@ -93,6 +95,20 @@ class Application {
             val payload = gson.fromJson(body, JsonObject::class.java)
             val eventType = request.header("x-github-event") ?: "unknown"
 
+            // Repo name is ALWAYS present
+            val repoName = payload["repository"]?.asJsonObject?.get("full_name")?.asString ?: "unknown-repo"
+
+            // Try to find a timestamp (fallback to request received time)
+            val timestamp =
+                payload["created_at"]?.asString
+                    ?: payload["updated_at"]?.asString
+                    ?: payload["timestamp"]?.asString
+                    ?: currentDateTime // fallback if none exists
+
+            allEvents
+                .getOrPut(repoName) { mutableListOf() }
+                .add(EventEntry(timestamp, eventType, gson.toJson(payload))) // or your own pretty string
+
             log.info("Github header event type: $eventType")
 
             // Only handle workflow_run events
@@ -115,7 +131,8 @@ class Application {
                     workflowMessages[runId]!!.add(gsonPretty.toJson(payload))
                 }
                 val status = workflowRun.get("status")?.takeIf { !it.isJsonNull }?.asString // in_progress / completed
-                val conclusion = workflowRun.get("conclusion")?.takeIf { !it.isJsonNull }?.asString // success / failure / cancelled
+                val conclusion =
+                    workflowRun.get("conclusion")?.takeIf { !it.isJsonNull }?.asString // success / failure / cancelled
 
                 if (conclusion != null) {
                     val runStartedAt = Instant.parse(workflowRun.get("run_started_at")!!.asString)
@@ -167,39 +184,71 @@ class Application {
         return hashBytes.joinToString("") { "%02x".format(it) }
     }
 
+    //    val guiHandler: HttpHandler = { _ ->
+//        val html =
+//            buildString {
+//                append("<html><head>")
+//                append(
+//                    """
+//            <style>
+//                details { margin: 8px 0; }
+//                summary { cursor: pointer; font-weight: bold; }
+//                pre { background: #f4f4f4; padding: 8px; border-radius: 4px; }
+//            </style>
+//        """,
+//                )
+//                append("</head><body>")
+//                append("<h1>Workflow Messages</h1>")
+//
+//                if (workflowMessages.isEmpty()) {
+//                    append("<p>No messages received yet.</p>")
+//                } else {
+//                    workflowMessages.forEach { (id, messages) ->
+//                        append("<details>")
+//                        append("<summary>Workflow ID: $id (${messages.size} events)</summary>")
+//
+//                        messages.forEach { msg ->
+//                            val type = if (msg.contains("workflow_job")) "Job" else "Run"
+//                            append("<details style='margin-left:20px;'>")
+//                            append("<summary>$type event</summary>")
+//                            append("<pre>$msg</pre>")
+//                            append("</details>")
+//                        }
+//
+//                        append("</details>")
+//                    }
+//                }
+//
+//                append("</body></html>")
+//            }
+//
+//        Response(OK).body(html).header("Content-Type", "text/html")
+//    }
     val guiHandler: HttpHandler = { _ ->
+
         val html =
             buildString {
                 append("<html><head>")
-                append(
-                    """
-            <style>
-                details { margin: 8px 0; }
-                summary { cursor: pointer; font-weight: bold; }
-                pre { background: #f4f4f4; padding: 8px; border-radius: 4px; }
-            </style>
-        """,
-                )
+                append("<style>")
+                append("details { margin-bottom: 10px; }")
+                append("pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }")
+                append("</style>")
                 append("</head><body>")
-                append("<h1>Workflow Messages</h1>")
+                append("<h1>Webhook Events Viewer</h1>")
 
-                if (workflowMessages.isEmpty()) {
-                    append("<p>No messages received yet.</p>")
-                } else {
-                    workflowMessages.forEach { (id, messages) ->
-                        append("<details>")
-                        append("<summary>Workflow ID: $id (${messages.size} events)</summary>")
+                allEvents.forEach { (repoName, events) ->
+                    append("<details><summary><b>$repoName</b> (${events.size} events)</summary>")
 
-                        messages.forEach { msg ->
-                            val type = if (msg.contains("workflow_job")) "Job" else "Run"
-                            append("<details style='margin-left:20px;'>")
-                            append("<summary>$type event</summary>")
-                            append("<pre>$msg</pre>")
-                            append("</details>")
-                        }
-
-                        append("</details>")
+                    events.forEach { ev ->
+                        append(
+                            """<details style="margin-left:20px">
+                    <summary>${ev.timestamp} | <code>${ev.type}</code></summary>
+                    <pre>${ev.jsonPretty}</pre>
+                </details>""",
+                        )
                     }
+
+                    append("</details>")
                 }
 
                 append("</body></html>")
@@ -208,3 +257,9 @@ class Application {
         Response(OK).body(html).header("Content-Type", "text/html")
     }
 }
+
+data class EventEntry(
+    val timestamp: String,
+    val type: String,
+    val jsonPretty: String,
+)
