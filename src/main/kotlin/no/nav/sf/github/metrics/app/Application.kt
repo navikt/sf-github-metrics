@@ -296,12 +296,48 @@ class Application {
                         append("<details class='repo'><summary><b>$repoName</b></summary>")
 
                         events.forEach { event ->
+//                            val pillColor =
+//                                when (event.type) {
+//                                    "workflow_run" -> "#c6f6d5" // light green
+//                                    "workflow_job" -> "#bee3f8" // light blue
+//                                    "push" -> "#fed7d7" // light red
+//                                    else -> "#e2e8f0" // light gray
+//                                }
+
                             val pillColor =
                                 when (event.type) {
-                                    "workflow_run" -> "#c6f6d5" // light green
-                                    "workflow_job" -> "#bee3f8" // light blue
-                                    "push" -> "#fed7d7" // light red
-                                    else -> "#e2e8f0" // light gray
+
+                                    // 🛠 Workflow / CI (distinguished)
+                                    "workflow_run" -> "#9ae6b4" // medium green
+                                    "workflow_job" -> "#c6f6d5" // light green
+                                    "check_suite", "check_run" -> "#d9f7e3" // extra pale green
+
+                                    // 🐛 Issues / PRs
+                                    "pull_request", "pull_request_review", "issues", "issue_comment" -> "#bee3f8"
+
+                                    // 📝 Comments
+                                    "commit_comment", "pull_request_review_comment" -> "#fefcbf"
+
+                                    // 📣 Discussions
+                                    "discussion", "discussion_comment" -> "#d6e2ff"
+
+                                    // 📦 Deployments
+                                    "deployment", "deployment_status" -> "#fcd5ce"
+
+                                    // 👤 User / Org / Teams
+                                    "member", "membership", "team", "organization" -> "#fae1dd"
+
+                                    // 🧠 Repo / Code changes
+                                    "push", "create", "delete", "branch_protection_rule" -> "#fed7d7"
+
+                                    // ⚠ Security
+                                    "security_advisory", "code_scanning_alert" -> "#fbd38d"
+
+                                    // 🧪 Status
+                                    "status" -> "#fff5b1"
+
+                                    // ❓ Default
+                                    else -> "#e2e8f0"
                                 }
 
                             append("<details class='event'><summary>")
