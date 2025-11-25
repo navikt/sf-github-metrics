@@ -78,11 +78,11 @@ class Application {
         File("/tmp/latestWebhookCall").writeText("$currentDateTime\n" + request.toMessage())
 
         try {
-            // val body = request.bodyString()
-            val body =
-                request.body.stream.use { inputStream ->
-                    inputStream.readBytes().toString(Charsets.UTF_8)
-                }
+            val body = request.bodyString()
+//            val body =
+//                request.body.stream.use { inputStream ->
+//                    inputStream.readBytes().toString(Charsets.UTF_8)
+//                }
             val signatureHeader = request.header("x-hub-signature-256")
             val secret = webhookSecret // already loaded from env()
 
@@ -228,37 +228,100 @@ class Application {
 //
 //        Response(OK).body(html).header("Content-Type", "text/html")
 //    }
-    val guiHandler: HttpHandler = { _ ->
 
+//    val guiHandler: HttpHandler = { _ ->
+//
+//        val html =
+//            buildString {
+//                append("<html><head>")
+//                append("<style>")
+//                append("details { margin-bottom: 10px; }")
+//                append("pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }")
+//                append("</style>")
+//                append("</head><body>")
+//                append("<h1>Webhook Events Viewer</h1>")
+//
+//                allEvents.forEach { (repoName, events) ->
+//                    append("<details><summary><b>$repoName</b> (${events.size} events)</summary>")
+//
+//                    events.forEach { ev ->
+//                        append(
+//                            """<details style="margin-left:20px">
+//                    <summary><code>${ev.type}</code> | ${ev.timestamp}</summary>
+//                    <pre>${ev.jsonPretty}</pre>
+//                </details>""",
+//                        )
+//                    }
+//
+//                    append("</details>")
+//                }
+//
+//                append("</body></html>")
+//            }
+//
+//        Response(OK).body(html).header("Content-Type", "text/html")
+//    }
+
+    val guiHandler: HttpHandler = { _ ->
         val html =
             buildString {
                 append("<html><head>")
                 append("<style>")
-                append("details { margin-bottom: 10px; }")
-                append("pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }")
-                append("</style>")
-                append("</head><body>")
-                append("<h1>Webhook Events Viewer</h1>")
-
-                allEvents.forEach { (repoName, events) ->
-                    append("<details><summary><b>$repoName</b> (${events.size} events)</summary>")
-
-                    events.forEach { ev ->
-                        append(
-                            """<details style="margin-left:20px">
-                    <summary><code>${ev.type}</code> | ${ev.timestamp}</summary>
-                    <pre>${ev.jsonPretty}</pre>
-                </details>""",
-                        )
+                append(
+                    """
+                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    .repo { margin-bottom: 16px; }
+                    .event { margin-left: 20px; margin-top: 8px; }
+                    .pill {
+                        display: inline-block;
+                        padding: 2px 8px;
+                        border-radius: 12px;
+                        font-size: 12px;
+                        color: #000;
+                        margin-right: 6px;
+                        font-weight: 600;
                     }
+                    details { margin-bottom: 10px; }
+                    pre { background: #f4f4f4; padding: 10px; border-radius: 8px; overflow-x: auto;}
+                    """.trimIndent(),
+                )
+                append("</style></head><body>")
 
-                    append("</details>")
+                append("<h2>📦 Received Events</h2>")
+
+                if (allEvents.isEmpty()) {
+                    append("<p>No events received yet.</p>")
+                } else {
+                    allEvents.forEach { (repoName, events) ->
+                        append("<details class='repo'><summary><b>$repoName</b></summary>")
+
+                        events.forEach { event ->
+                            val pillColor =
+                                when (event.type) {
+                                    "workflow_run" -> "#c6f6d5" // light green
+                                    "workflow_job" -> "#bee3f8" // light blue
+                                    "push" -> "#fed7d7" // light red
+                                    else -> "#e2e8f0" // light gray
+                                }
+
+                            append("<details class='event'><summary>")
+                            append("<span class='pill' style='background:$pillColor;'>${event.type}</span>")
+                            append("${event.timestamp}</summary>")
+
+                            append("<pre>${event.jsonPretty}</pre>")
+                            append("</details>")
+                        }
+
+                        append("</details>")
+                    }
                 }
 
                 append("</body></html>")
             }
 
-        Response(OK).body(html).header("Content-Type", "text/html")
+        Response(OK)
+            .header("Content-Type", "text/html; charset=utf-8")
+            .body(html)
     }
 }
 
