@@ -78,7 +78,11 @@ class Application {
         File("/tmp/latestWebhookCall").writeText("$currentDateTime\n" + request.toMessage())
 
         try {
-            val body = request.bodyString()
+            // val body = request.bodyString()
+            val body =
+                request.body.stream.use { inputStream ->
+                    inputStream.readBytes().toString(Charsets.UTF_8)
+                }
             val signatureHeader = request.header("x-hub-signature-256")
             val secret = webhookSecret // already loaded from env()
 
