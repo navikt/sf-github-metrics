@@ -105,9 +105,10 @@ class Application {
             // Try to find a timestamp (fallback to request received time)
             val timestamp = currentDateTime // fallback if none exists
 
+            val actionValue = payload.get("action")?.asString ?: ""
             allEvents
                 .getOrPut(repoName) { mutableListOf() }
-                .add(EventEntry(timestamp, eventType, gsonPretty.toJson(payload))) // or your own pretty string
+                .add(EventEntry(timestamp, eventType, gsonPretty.toJson(payload), actionValue)) // or your own pretty string
 
             log.info("Github header event type: $eventType")
 
@@ -258,6 +259,14 @@ class Application {
 //        Response(OK).body(html).header("Content-Type", "text/html")
 //    }
 
+    //                            val pillColor =
+//                                when (event.type) {
+//                                    "workflow_run" -> "#c6f6d5" // light green
+//                                    "workflow_job" -> "#bee3f8" // light blue
+//                                    "push" -> "#fed7d7" // light red
+//                                    else -> "#e2e8f0" // light gray
+//                                }
+
     val guiHandler: HttpHandler = { _ ->
         val html =
             buildString {
@@ -292,54 +301,40 @@ class Application {
                         append("<details class='repo'><summary><b>$repoName</b></summary>")
 
                         events.forEach { event ->
-//                            val pillColor =
-//                                when (event.type) {
-//                                    "workflow_run" -> "#c6f6d5" // light green
-//                                    "workflow_job" -> "#bee3f8" // light blue
-//                                    "push" -> "#fed7d7" // light red
-//                                    else -> "#e2e8f0" // light gray
-//                                }
-
                             val pillColor =
                                 when (event.type) {
-
-                                    // 🛠 Workflow / CI (distinguished)  #9ae6b4
                                     "workflow_run" -> "#d6e2ff"
-                                    "workflow_job" -> "#c6f6d5" // light green
-                                    "check_suite", "check_run" -> "#eeeeee" // extra pale gray
-
-                                    // 🐛 Issues / PRs
+                                    "workflow_job" -> "#c6f6d5"
+                                    "check_suite", "check_run" -> "#eeeeee"
                                     "pull_request", "pull_request_review", "issues", "issue_comment" -> "#bee3f8"
-
-                                    // 📝 Comments
                                     "commit_comment", "pull_request_review_comment" -> "#fefcbf"
-
-                                    // 📣 Discussions
                                     "discussion", "discussion_comment" -> "#d6e2ff"
-
-                                    // 📦 Deployments
                                     "deployment", "deployment_status" -> "#fcd5ce"
-
-                                    // 👤 User / Org / Teams
                                     "member", "membership", "team", "organization" -> "#fae1dd"
-
-                                    // 🧠 Repo / Code changes
                                     "push", "create", "delete", "branch_protection_rule" -> "#fed7d7"
-
-                                    // ⚠ Security
                                     "security_advisory", "code_scanning_alert" -> "#fbd38d"
-
-                                    // 🧪 Status
                                     "status" -> "#fff5b1"
-
-                                    // ❓ Default
                                     else -> "#e2e8f0"
                                 }
 
                             append("<details class='event'><summary>")
                             append("<span class='pill' style='background:$pillColor;'>${event.type}</span>")
-                            append("${event.timestamp}</summary>")
 
+                            // only render action pill if it exists
+                            if (event.action != "") {
+                                val actionColor =
+                                    when (event.action) {
+                                        "requested" -> "#fefcbf" // light yellow
+                                        "completed" -> "#c6f6d5" // light green
+                                        "in_progress" -> "#bee3f8" // light blue
+                                        "opened" -> "#fbb6ce" // pink
+                                        "closed" -> "#fed7d7" // light red
+                                        else -> "#e2e8f0"
+                                    }
+                                append("<span class='pill' style='background:$actionColor;'>${event.action}</span>")
+                            }
+
+                            append("${event.timestamp}</summary>")
                             append("<pre>${event.jsonPretty}</pre>")
                             append("</details>")
                         }
@@ -361,4 +356,5 @@ data class EventEntry(
     val timestamp: String,
     val type: String,
     val jsonPretty: String,
+    val action: String? = null,
 )
