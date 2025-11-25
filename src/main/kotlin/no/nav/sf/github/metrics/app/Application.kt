@@ -103,11 +103,7 @@ class Application {
             val repoName = payload["repository"]?.asJsonObject?.get("full_name")?.asString ?: "unknown-repo"
 
             // Try to find a timestamp (fallback to request received time)
-            val timestamp =
-                payload["created_at"]?.asString
-                    ?: payload["updated_at"]?.asString
-                    ?: payload["timestamp"]?.asString
-                    ?: currentDateTime // fallback if none exists
+            val timestamp = currentDateTime // fallback if none exists
 
             allEvents
                 .getOrPut(repoName) { mutableListOf() }
@@ -307,10 +303,10 @@ class Application {
                             val pillColor =
                                 when (event.type) {
 
-                                    // 🛠 Workflow / CI (distinguished)
-                                    "workflow_run" -> "#9ae6b4" // medium green
+                                    // 🛠 Workflow / CI (distinguished)  #9ae6b4
+                                    "workflow_run" -> "#d6e2ff"
                                     "workflow_job" -> "#c6f6d5" // light green
-                                    "check_suite", "check_run" -> "#d9f7e3" // extra pale green
+                                    "check_suite", "check_run" -> "#eeeeee" // extra pale gray
 
                                     // 🐛 Issues / PRs
                                     "pull_request", "pull_request_review", "issues", "issue_comment" -> "#bee3f8"
