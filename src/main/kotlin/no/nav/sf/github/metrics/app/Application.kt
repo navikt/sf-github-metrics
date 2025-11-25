@@ -286,6 +286,17 @@ class Application {
                         margin-right: 6px;
                         font-weight: 600;
                     }
+                    .pill-secondary {
+                        display: inline-block;
+                        padding: 2px 8px;
+                        border-radius: 12px;
+                        font-size: 12px;
+                        color: #000;
+                        margin-right: 6px;
+                        font-weight: 600;
+                        border: 1px solid #aaa; /* secondary look */
+                        background: transparent;
+                    }
                     details { margin-bottom: 10px; }
                     pre { background: #f4f4f4; padding: 10px; border-radius: 8px; overflow-x: auto;}
                     """.trimIndent(),
@@ -331,7 +342,7 @@ class Application {
                                         "closed" -> "#fed7d7" // light red
                                         else -> "#e2e8f0"
                                     }
-                                append("<span class='pill' style='background:$actionColor;'>${event.action}</span>")
+                                append("<span class='pill-secondary' style='background:$actionColor;'>${event.action}</span>")
                             }
 
                             append("${event.timestamp}</summary>")
