@@ -4,13 +4,16 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import mu.KotlinLogging
+import no.nav.sf.github.metrics.app.Metrics.latestWorkflowDuration
+import no.nav.sf.github.metrics.app.Metrics.latestWorkflowDurationSummary
+import no.nav.sf.github.metrics.app.Metrics.registerLabelSummary
+import no.nav.sf.github.metrics.app.Metrics.successfulDeploys
 import no.nav.sf.github.metrics.app.token.AuthRouteBuilder
 import no.nav.sf.github.metrics.app.token.DefaultTokenValidator
 import no.nav.sf.github.metrics.app.token.MockTokenValidator
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Response
-import org.http4k.core.Status
 import org.http4k.core.Status.Companion.INTERNAL_SERVER_ERROR
 import org.http4k.core.Status.Companion.OK
 import org.http4k.routing.bind
@@ -96,12 +99,41 @@ class Application {
             val eventType = request.header("x-github-event") ?: "unknown"
 
             // Repo name is ALWAYS present
-            val repoName = payload["repository"]?.asJsonObject?.get("full_name")?.asString ?: "unknown-repo"
+            val repoName = payload["repository"]?.asJsonObject?.get("name")?.asString ?: "unknown-repo"
 
             val actionValue = payload.get("action")?.asString ?: ""
             allEvents
                 .getOrPut(repoName) { mutableListOf() }
                 .add(EventEntry(currentDateTime, eventType, gsonPretty.toJson(payload), actionValue))
+
+            val workflowRun = payload["workflow_run"]?.asJsonObject
+
+            if (
+                eventType == "workflow_run" && // Correct event type
+                actionValue == "completed" && // Finished run
+                workflowRun != null &&
+                workflowRun["event"]?.asString == "push" && // Must be triggered by push
+                workflowRun["conclusion"]?.asString == "success" // Must have succeeded
+            ) {
+                val branch = workflowRun["head_branch"]?.asString ?: "unknown-branch"
+                val workflowName = workflowRun["name"]?.asString ?: "unknown-workflow"
+
+                val created = Instant.parse(workflowRun["created_at"]?.asString!!)
+                val started = Instant.parse(workflowRun["run_started_at"]?.asString!!)
+                val ended = Instant.parse(workflowRun["updated_at"]?.asString!!)
+
+                val durationWorkflow = Duration.between(started, ended).seconds
+                val durationDelay = Duration.between(created, started).seconds
+
+                // Increase counter WITH labels
+                successfulDeploys.labels(repoName, branch, workflowName).inc()
+
+                latestWorkflowDuration.labels(repoName, branch, workflowName).set(durationWorkflow.toDouble())
+
+                latestWorkflowDurationSummary.labels(repoName, branch, workflowName).observe(durationWorkflow.toDouble())
+
+                log.info { "💚 Successful deploy detected: $repoName / $workflowName ($branch)" }
+            }
 
             log.info("Github header event type: $eventType")
 

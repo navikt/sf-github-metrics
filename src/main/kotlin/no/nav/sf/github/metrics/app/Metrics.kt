@@ -18,6 +18,30 @@ object Metrics {
 
     val cRegistry: CollectorRegistry = CollectorRegistry.defaultRegistry
 
+    val successfulDeploys =
+        registerLabelCounter(
+            "deploy_success",
+            "repo",
+            "branch",
+            "workflow",
+        )
+
+    val latestWorkflowDuration =
+        registerLabelGauge(
+            "workflow_duration",
+            "repo",
+            "branch",
+            "workflow",
+        )
+
+    val latestWorkflowDurationSummary =
+        registerLabelSummary(
+            "workflow_duration_summary",
+            "repo",
+            "branch",
+            "workflow",
+        )
+
     val apiCalls: Counter = registerLabelCounter("api_calls", "ingress")
 
     fun registerForwardedCallHistogram(name: String): Histogram =
@@ -29,19 +53,15 @@ object Metrics {
             .buckets(50.0, 100.0, 200.0, 300.0, 400.0, 500.0, 1000.0, 2000.0, 4000.0)
             .register()
 
-    fun registerSummary(name: String) =
-        Summary
-            .build()
-            .name(name)
-            .help(name)
-            .register()
-
-    fun registerGauge(name: String) =
-        Gauge
-            .build()
-            .name(name)
-            .help(name)
-            .register()
+    fun registerLabelSummary(
+        name: String,
+        vararg labels: String,
+    ) = Summary
+        .build()
+        .name(name)
+        .help(name)
+        .labelNames(*labels)
+        .register()
 
     fun registerLabelGauge(
         name: String,
