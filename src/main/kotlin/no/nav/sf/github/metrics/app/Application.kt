@@ -79,10 +79,6 @@ class Application {
 
         try {
             val body = request.bodyString()
-//            val body =
-//                request.body.stream.use { inputStream ->
-//                    inputStream.readBytes().toString(Charsets.UTF_8)
-//                }
             val signatureHeader = request.header("x-hub-signature-256")
             val secret = webhookSecret // already loaded from env()
 
@@ -102,66 +98,12 @@ class Application {
             // Repo name is ALWAYS present
             val repoName = payload["repository"]?.asJsonObject?.get("full_name")?.asString ?: "unknown-repo"
 
-            // Try to find a timestamp (fallback to request received time)
-            val timestamp = currentDateTime // fallback if none exists
-
             val actionValue = payload.get("action")?.asString ?: ""
             allEvents
                 .getOrPut(repoName) { mutableListOf() }
-                .add(EventEntry(timestamp, eventType, gsonPretty.toJson(payload), actionValue)) // or your own pretty string
+                .add(EventEntry(currentDateTime, eventType, gsonPretty.toJson(payload), actionValue))
 
             log.info("Github header event type: $eventType")
-
-            // Only handle workflow_run events
-            if (eventType == "push") {
-                File("/tmp/push_events").appendText(request.bodyString() + "\n\n")
-            } else if (eventType == "workflow_job") {
-                val jobRun = payload.getAsJsonObject("workflow_job")
-                val runId = jobRun.get("run_id")?.takeIf { !it.isJsonNull }?.asLong
-                if (runId != null) {
-                    if (!workflowMessages.contains(runId)) workflowMessages[runId] = mutableListOf()
-                    workflowMessages[runId]!!.add(gsonPretty.toJson(payload))
-                }
-            } else if (eventType == "workflow_run") {
-                log.info("Workflow run event registered")
-                File("/tmp/Workflow_run_events").appendText(request.bodyString() + "\n\n")
-                val workflowRun = payload.getAsJsonObject("workflow_run")
-                val runId = workflowRun.get("id")?.takeIf { !it.isJsonNull }?.asLong
-                if (runId != null) {
-                    if (!workflowMessages.contains(runId)) workflowMessages[runId] = mutableListOf()
-                    workflowMessages[runId]!!.add(gsonPretty.toJson(payload))
-                }
-                val status = workflowRun.get("status")?.takeIf { !it.isJsonNull }?.asString // in_progress / completed
-                val conclusion =
-                    workflowRun.get("conclusion")?.takeIf { !it.isJsonNull }?.asString // success / failure / cancelled
-
-                if (conclusion != null) {
-                    val runStartedAt = Instant.parse(workflowRun.get("run_started_at")!!.asString)
-                    val updatedAt = Instant.parse(workflowRun.get("updated_at")!!.asString)
-
-                    // Track start time for parallel runs
-                    if (status == "in_progress" && runId != null) {
-                        workflowStartTimes[runId] = runStartedAt
-                        log.info("Workflow run $runId started at $runStartedAt")
-                    }
-
-                    // When workflow ends, compute duration
-                    if (status == "completed" && runId != null) {
-                        val startTime = workflowStartTimes[runId] ?: runStartedAt // fallback
-                        val durationSeconds = Duration.between(startTime, updatedAt).seconds
-
-                        when (conclusion) {
-                            "success" -> log.info("SUCCESS: Run $runId took $durationSeconds sec")
-                            "failure" -> log.info("FAILED: Run $runId took $durationSeconds sec")
-                            "cancelled" -> log.info("CANCELLED: Run $runId took $durationSeconds sec")
-                            else -> log.warn("Run $runId completed with unknown conclusion: $conclusion")
-                        }
-
-                        // Clean up memory
-                        workflowStartTimes.remove(runId)
-                    }
-                }
-            }
 
             Response(OK)
         } catch (e: Exception) {
@@ -184,81 +126,6 @@ class Application {
         // Convert to hex string
         return hashBytes.joinToString("") { "%02x".format(it) }
     }
-
-    //    val guiHandler: HttpHandler = { _ ->
-//        val html =
-//            buildString {
-//                append("<html><head>")
-//                append(
-//                    """
-//            <style>
-//                details { margin: 8px 0; }
-//                summary { cursor: pointer; font-weight: bold; }
-//                pre { background: #f4f4f4; padding: 8px; border-radius: 4px; }
-//            </style>
-//        """,
-//                )
-//                append("</head><body>")
-//                append("<h1>Workflow Messages</h1>")
-//
-//                if (workflowMessages.isEmpty()) {
-//                    append("<p>No messages received yet.</p>")
-//                } else {
-//                    workflowMessages.forEach { (id, messages) ->
-//                        append("<details>")
-//                        append("<summary>Workflow ID: $id (${messages.size} events)</summary>")
-//
-//                        messages.forEach { msg ->
-//                            val type = if (msg.contains("workflow_job")) "Job" else "Run"
-//                            append("<details style='margin-left:20px;'>")
-//                            append("<summary>$type event</summary>")
-//                            append("<pre>$msg</pre>")
-//                            append("</details>")
-//                        }
-//
-//                        append("</details>")
-//                    }
-//                }
-//
-//                append("</body></html>")
-//            }
-//
-//        Response(OK).body(html).header("Content-Type", "text/html")
-//    }
-
-//    val guiHandler: HttpHandler = { _ ->
-//
-//        val html =
-//            buildString {
-//                append("<html><head>")
-//                append("<style>")
-//                append("details { margin-bottom: 10px; }")
-//                append("pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }")
-//                append("</style>")
-//                append("</head><body>")
-//                append("<h1>Webhook Events Viewer</h1>")
-//
-//                allEvents.forEach { (repoName, events) ->
-//                    append("<details><summary><b>$repoName</b> (${events.size} events)</summary>")
-//
-//                    events.forEach { ev ->
-//                        append(
-//                            """<details style="margin-left:20px">
-//                    <summary><code>${ev.type}</code> | ${ev.timestamp}</summary>
-//                    <pre>${ev.jsonPretty}</pre>
-//                </details>""",
-//                        )
-//                    }
-//
-//                    append("</details>")
-//                }
-//
-//                append("</body></html>")
-//            }
-//
-//        Response(OK).body(html).header("Content-Type", "text/html")
-//    }
-
     //                            val pillColor =
 //                                when (event.type) {
 //                                    "workflow_run" -> "#c6f6d5" // light green
