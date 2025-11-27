@@ -32,14 +32,14 @@ spec:
   ingresses:
     - "https://sf-github-metrics.intern.nav.no"
     - "https://sf-github-metrics.ekstern.nav.no"
-  #  azure:
-  #    application:
-  #      enabled: true
-  #      allowAllUsers: true
-  #      claims:
-  #        extra:
-  #          - azp_name
-  #          - NAVident
+  azure:
+    application:
+      enabled: true
+      allowAllUsers: true
+      claims:
+        extra:
+          - azp_name
+          - NAVident
   #    sidecar:
   #      enabled: false
   #  accessPolicy:
