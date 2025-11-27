@@ -45,6 +45,7 @@ object Metrics {
             "branch",
             "name",
             "event",
+            "path",
             "conclusion",
         )
 
@@ -55,6 +56,7 @@ object Metrics {
             "branch",
             "name",
             "event",
+            "path",
             "conclusion",
         )
 
@@ -80,13 +82,14 @@ object Metrics {
         name: String,
         event: String,
         conclusion: String,
+        path: String,
         value: Double,
     ) {
         workflowDurationSummary
-            .labels(repo, branch, name, event, conclusion)
+            .labels(repo, branch, name, event, path, conclusion)
             .observe(value)
         latestWorkflowDuration
-            .labels(repo, branch, name, event, conclusion)
+            .labels(repo, branch, name, event, path, conclusion)
             .set(value)
     }
 

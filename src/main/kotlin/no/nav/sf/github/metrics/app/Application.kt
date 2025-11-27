@@ -113,6 +113,7 @@ class Application {
                 val branch = workflowRun["head_branch"]?.asString ?: "unknown-branch"
                 val name = workflowRun["name"]?.asString ?: "unknown-name"
                 val event = workflowRun["event"]?.asString ?: "unknown-event"
+                val path = workflowRun["path"]?.asString ?: "unknown-path"
                 val conclusion = workflowRun["conclusion"]?.asString ?: "unknown-conclusion"
 
                 val created = Instant.parse(workflowRun["created_at"]?.asString!!)
@@ -128,11 +129,12 @@ class Application {
                     name = name,
                     event = event,
                     conclusion = conclusion,
+                    path = path,
                     value = durationWorkflow.toDouble(),
                 )
 
                 log.info {
-                    "Workflow conclusion detected: $repoName / $name ($branch) / $event / $conclusion / duration: ${durationWorkflow.seconds} s"
+                    "Workflow conclusion detected: $repoName / $name ($branch) / $event / $path / $conclusion / duration: ${durationWorkflow.seconds} s"
                 }
             }
 
