@@ -1,4 +1,4 @@
-package no.nav.sf.github.metrics.app.token
+package no.nav.sf.github.metrics.token
 
 import no.nav.security.token.support.core.jwt.JwtToken
 import org.http4k.core.Request

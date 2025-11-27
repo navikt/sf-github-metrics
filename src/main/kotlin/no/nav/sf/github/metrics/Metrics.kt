@@ -1,4 +1,4 @@
-package no.nav.sf.github.metrics.app
+package no.nav.sf.github.metrics
 
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.Counter

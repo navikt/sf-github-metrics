@@ -1,12 +1,12 @@
-package no.nav.sf.github.metrics.app
+package no.nav.sf.github.metrics
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import mu.KotlinLogging
-import no.nav.sf.github.metrics.app.token.AuthRouteBuilder
-import no.nav.sf.github.metrics.app.token.DefaultTokenValidator
-import no.nav.sf.github.metrics.app.token.MockTokenValidator
+import no.nav.sf.github.metrics.token.AuthRouteBuilder
+import no.nav.sf.github.metrics.token.DefaultTokenValidator
+import no.nav.sf.github.metrics.token.MockTokenValidator
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Response

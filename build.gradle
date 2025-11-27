@@ -6,7 +6,7 @@ plugins {
     id 'com.gradleup.shadow' version '8.3.1'
 }
 
-group 'no.nav.template'
+group 'no.nav.sf.github.metrics'
 version '0.1.1'
 
 jar {

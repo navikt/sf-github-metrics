@@ -1,4 +1,4 @@
-package no.nav.sf.github.metrics.app
+package no.nav.sf.github.metrics
 
 import org.junit.jupiter.api.Test
 

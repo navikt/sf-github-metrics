@@ -1,6 +1,6 @@
-package no.nav.sf.github.metrics.app.token
+package no.nav.sf.github.metrics.token
 
-import no.nav.sf.github.metrics.app.Metrics
+import no.nav.sf.github.metrics.Metrics
 import org.http4k.core.HttpHandler
 import org.http4k.core.Method
 import org.http4k.core.Response

@@ -1,4 +1,4 @@
-package no.nav.sf.github.metrics.app
+package no.nav.sf.github.metrics
 
 val application = Application()
 

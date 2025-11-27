@@ -1,6 +1,6 @@
 @file:Suppress("ktlint:standard:filename")
 
-package no.nav.sf.github.metrics.app
+package no.nav.sf.github.metrics
 
 import java.time.ZoneId
 import java.time.ZonedDateTime
