@@ -57,7 +57,7 @@ class Application {
             "/internal/metrics" bind Method.GET to Metrics.metricsHttpHandler,
             "/internal/gui" bind Method.GET to guiHandler,
             "/internal/hello" bind Method.GET to { Response(OK).body("Hello") },
-            "/internal/secrethello" authbind Method.GET to { Response(OK).body("Secret Hello") },
+            "/internal/secrethello" authbind Method.GET to { Response(OK).body("Secret Hello!") },
             "/webhook" bind Method.GET to { Response(OK).body("Up") },
             "/webhook" bind Method.POST to webhookHandler,
         )
