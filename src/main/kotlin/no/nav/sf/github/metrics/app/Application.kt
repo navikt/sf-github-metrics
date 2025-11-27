@@ -4,10 +4,6 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import mu.KotlinLogging
-import no.nav.sf.github.metrics.app.Metrics.latestWorkflowDuration
-import no.nav.sf.github.metrics.app.Metrics.latestWorkflowDurationSummary
-import no.nav.sf.github.metrics.app.Metrics.registerLabelSummary
-import no.nav.sf.github.metrics.app.Metrics.successfulDeploys
 import no.nav.sf.github.metrics.app.token.AuthRouteBuilder
 import no.nav.sf.github.metrics.app.token.DefaultTokenValidator
 import no.nav.sf.github.metrics.app.token.MockTokenValidator
@@ -27,6 +23,7 @@ import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import kotlin.time.Duration.Companion.seconds
 
 class Application {
     private val log = KotlinLogging.logger { }
@@ -82,18 +79,18 @@ class Application {
 
         try {
             val body = request.bodyString()
-            val signatureHeader = request.header("x-hub-signature-256")
-            val secret = webhookSecret // already loaded from env()
-
-            val computedHash = "sha256=" + hmacSha256(secret, body)
-
-            val verified = computedHash == signatureHeader
-
-            if (verified) {
-                log.info("Received Webhook. Webhook signature VERIFIED! 🟢")
-            } else {
-                log.warn("Received Webhook. Webhook signature NOT verified 🔴 - Expected: $computedHash - Got: $signatureHeader ")
-            }
+//            val signatureHeader = request.header("x-hub-signature-256")
+//            val secret = webhookSecret // already loaded from env()
+//
+//            val computedHash = "sha256=" + hmacSha256(secret, body)
+//
+//            val verified = computedHash == signatureHeader
+//
+//            if (verified) {
+//                log.info("Received Webhook. Webhook signature VERIFIED! 🟢")
+//            } else {
+//                log.warn("Received Webhook. Webhook signature NOT verified 🔴 - Expected: $computedHash - Got: $signatureHeader ")
+//            }
 
             val payload = gson.fromJson(body, JsonObject::class.java)
             val eventType = request.header("x-github-event") ?: "unknown"
@@ -111,12 +108,12 @@ class Application {
             if (
                 eventType == "workflow_run" && // Correct event type
                 actionValue == "completed" && // Finished run
-                workflowRun != null &&
-                workflowRun["event"]?.asString == "push" && // Must be triggered by push
-                workflowRun["conclusion"]?.asString == "success" // Must have succeeded
+                workflowRun != null
             ) {
                 val branch = workflowRun["head_branch"]?.asString ?: "unknown-branch"
-                val workflowName = workflowRun["name"]?.asString ?: "unknown-workflow"
+                val name = workflowRun["name"]?.asString ?: "unknown-name"
+                val event = workflowRun["event"]?.asString ?: "unknown-event"
+                val conclusion = workflowRun["conclusion"]?.asString ?: "unknown-conclusion"
 
                 val created = Instant.parse(workflowRun["created_at"]?.asString!!)
                 val started = Instant.parse(workflowRun["run_started_at"]?.asString!!)
@@ -125,17 +122,52 @@ class Application {
                 val durationWorkflow = Duration.between(started, ended).seconds
                 val durationDelay = Duration.between(created, started).seconds
 
-                // Increase counter WITH labels
-                successfulDeploys.labels(repoName, branch, workflowName).inc()
+                Metrics.observeWorkflowDuration(
+                    repo = repoName,
+                    branch = branch,
+                    name = name,
+                    event = event,
+                    conclusion = conclusion,
+                    value = durationWorkflow.toDouble(),
+                )
 
-                latestWorkflowDuration.labels(repoName, branch, workflowName).set(durationWorkflow.toDouble())
-
-                latestWorkflowDurationSummary.labels(repoName, branch, workflowName).observe(durationWorkflow.toDouble())
-
-                log.info { "💚 Successful deploy detected: $repoName / $workflowName ($branch)" }
+                log.info {
+                    "Workflow conclusion detected: $repoName / $name ($branch) / $event / $conclusion / duration: ${durationWorkflow.seconds} s"
+                }
             }
 
-            log.info("Github header event type: $eventType")
+            val workflowJob = payload["workflow_job"]?.asJsonObject
+
+            if (
+                eventType == "workflow_job" && // Correct event type
+                actionValue == "completed" && // Finished run
+                workflowJob != null
+            ) {
+                val branch = workflowJob["head_branch"]?.asString ?: "unknown-branch"
+                val name = workflowJob["name"]?.asString ?: "unknown-name"
+                val workflowName = workflowJob["workflow_name"]?.asString ?: "unknown-workflow-name"
+                val conclusion = workflowJob["conclusion"]?.asString ?: "unknown-conclusion"
+
+                val created = Instant.parse(workflowJob["created_at"]?.asString!!)
+                val started = Instant.parse(workflowJob["started_at"]?.asString!!)
+                val ended = Instant.parse(workflowJob["completed_at"]?.asString!!)
+
+                val durationJob = Duration.between(started, ended).seconds
+                val durationDelay = Duration.between(created, started).seconds
+
+                Metrics.observeJobDuration(
+                    repo = repoName,
+                    branch = branch,
+                    name = name,
+                    workflowName = workflowName,
+                    conclusion = conclusion,
+                    value = durationJob.toDouble(),
+                )
+
+                log.info {
+                    "Job conclusion detected: $repoName / $workflowName ($branch) / $name / $conclusion / duration: ${durationJob.seconds} s"
+                }
+            }
 
             Response(OK)
         } catch (e: Exception) {
@@ -158,13 +190,6 @@ class Application {
         // Convert to hex string
         return hashBytes.joinToString("") { "%02x".format(it) }
     }
-    //                            val pillColor =
-//                                when (event.type) {
-//                                    "workflow_run" -> "#c6f6d5" // light green
-//                                    "workflow_job" -> "#bee3f8" // light blue
-//                                    "push" -> "#fed7d7" // light red
-//                                    else -> "#e2e8f0" // light gray
-//                                }
 
     val guiHandler: HttpHandler = { _ ->
         val html =

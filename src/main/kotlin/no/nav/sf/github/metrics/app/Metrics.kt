@@ -18,29 +18,77 @@ object Metrics {
 
     val cRegistry: CollectorRegistry = CollectorRegistry.defaultRegistry
 
-    val successfulDeploys =
-        registerLabelCounter(
-            "deploy_success",
+    val latestJobDuration =
+        registerLabelGauge(
+            "latest_job_duration",
             "repo",
             "branch",
-            "workflow",
+            "name",
+            "workflow_name",
+            "conclusion",
+        )
+
+    val jobsDurationSummary =
+        registerLabelSummary(
+            "job_duration_summary",
+            "repo",
+            "branch",
+            "name",
+            "workflow_name",
+            "conclusion",
         )
 
     val latestWorkflowDuration =
         registerLabelGauge(
-            "workflow_duration",
+            "latest_workflow_duration",
             "repo",
             "branch",
-            "workflow",
+            "name",
+            "event",
+            "conclusion",
         )
 
-    val latestWorkflowDurationSummary =
+    val workflowDurationSummary =
         registerLabelSummary(
             "workflow_duration_summary",
             "repo",
             "branch",
-            "workflow",
+            "name",
+            "event",
+            "conclusion",
         )
+
+    fun observeJobDuration(
+        repo: String,
+        branch: String,
+        name: String,
+        workflowName: String,
+        conclusion: String,
+        value: Double,
+    ) {
+        jobsDurationSummary
+            .labels(repo, branch, name, workflowName, conclusion)
+            .observe(value)
+        latestJobDuration
+            .labels(repo, branch, name, workflowName, conclusion)
+            .set(value)
+    }
+
+    fun observeWorkflowDuration(
+        repo: String,
+        branch: String,
+        name: String,
+        event: String,
+        conclusion: String,
+        value: Double,
+    ) {
+        workflowDurationSummary
+            .labels(repo, branch, name, event, conclusion)
+            .observe(value)
+        latestWorkflowDuration
+            .labels(repo, branch, name, event, conclusion)
+            .set(value)
+    }
 
     val apiCalls: Counter = registerLabelCounter("api_calls", "ingress")
 
