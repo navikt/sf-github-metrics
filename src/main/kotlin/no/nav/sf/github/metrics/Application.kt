@@ -28,15 +28,11 @@ import kotlin.time.Duration.Companion.seconds
 class Application {
     private val log = KotlinLogging.logger { }
 
+    var recordEventsForGui = false
+
     // Gson instance
     val gson = Gson()
-    val gsonPretty = GsonBuilder().setPrettyPrinting().create()
-
-    // To handle parallel runs
-    // Key: Run ID  | Value: Start time
-    val workflowStartTimes = ConcurrentHashMap<Long, Instant>()
-
-    val workflowMessages: MutableMap<Long, MutableList<String>> = mutableMapOf()
+    val gsonPretty = GsonBuilder().setPrettyPrinting().create()!!
 
     val allEvents: MutableMap<String, MutableList<EventEntry>> = mutableMapOf()
 
@@ -45,8 +41,6 @@ class Application {
     val tokenValidator = if (local) MockTokenValidator() else DefaultTokenValidator()
 
     val cluster = if (local) "local" else env(env_NAIS_CLUSTER_NAME)
-
-    // val webhookSecret = env(secret_WEBHOOK_SECRET)
 
     fun apiServer(port: Int): Http4kServer = api().asServer(Netty(port))
 
@@ -58,6 +52,18 @@ class Application {
             "/internal/gui" bind Method.GET to guiHandler,
             "/internal/hello" bind Method.GET to { Response(OK).body("Hello") },
             "/internal/secrethello" authbind Method.GET to { Response(OK).body("Secret Hello!") },
+            "/internal/start" bind Method.GET to {
+                recordEventsForGui = true
+                Response(OK)
+            },
+            "/internal/stop" bind Method.GET to {
+                recordEventsForGui = false
+                Response(OK)
+            },
+            "/internal/clear" bind Method.GET to {
+                allEvents.clear()
+                Response(OK)
+            },
             "/webhook" bind Method.GET to { Response(OK).body("Up") },
             "/webhook" bind Method.POST to webhookHandler,
         )
@@ -73,10 +79,6 @@ class Application {
     }
 
     val webhookHandler: HttpHandler = { request ->
-        log.info("Receieved Webhook event")
-        // log.info("Receieved Webhook. Body: ${request.bodyString()}")
-        File("/tmp/latestWebhookCall").writeText("$currentDateTime\n" + request.toMessage())
-
         try {
             val body = request.bodyString()
 //            val signatureHeader = request.header("x-hub-signature-256")
@@ -87,21 +89,22 @@ class Application {
 //            val verified = computedHash == signatureHeader
 //
 //            if (verified) {
-//                log.info("Received Webhook. Webhook signature VERIFIED! 🟢")
+//                log.info("Received Webhook. Webhook signature VERIFIED!")
 //            } else {
-//                log.warn("Received Webhook. Webhook signature NOT verified 🔴 - Expected: $computedHash - Got: $signatureHeader ")
+//                log.warn("Received Webhook. Webhook signature NOT verified- Expected: $computedHash - Got: $signatureHeader ")
 //            }
 
             val payload = gson.fromJson(body, JsonObject::class.java)
             val eventType = request.header("x-github-event") ?: "unknown"
 
-            // Repo name is ALWAYS present
             val repoName = payload["repository"]?.asJsonObject?.get("name")?.asString ?: "unknown-repo"
-
             val actionValue = payload.get("action")?.asString ?: ""
-            allEvents
-                .getOrPut(repoName) { mutableListOf() }
-                .add(EventEntry(currentDateTime, eventType, gsonPretty.toJson(payload), actionValue))
+
+            if (recordEventsForGui) {
+                allEvents
+                    .getOrPut(repoName) { mutableListOf() }
+                    .add(EventEntry(currentDateTime, eventType, gsonPretty.toJson(payload), actionValue))
+            }
 
             val workflowRun = payload["workflow_run"]?.asJsonObject
 
@@ -121,7 +124,7 @@ class Application {
                 val ended = Instant.parse(workflowRun["updated_at"]?.asString!!)
 
                 val durationWorkflow = Duration.between(started, ended).seconds
-                val durationDelay = Duration.between(created, started).seconds
+                val durationDelay = Duration.between(created, started).seconds // TODO if start delays is interesting to look at
 
                 Metrics.observeWorkflowDuration(
                     repo = repoName,
@@ -155,7 +158,7 @@ class Application {
                 val ended = Instant.parse(workflowJob["completed_at"]?.asString!!)
 
                 val durationJob = Duration.between(started, ended).seconds
-                val durationDelay = Duration.between(created, started).seconds
+                val durationDelay = Duration.between(created, started).seconds // TODO if start delays is interesting to look at
 
                 Metrics.observeJobDuration(
                     repo = repoName,
@@ -223,6 +226,18 @@ class Application {
                         border: 1px solid #aaa; /* secondary look */
                         background: transparent;
                     }
+                    .control-btn {
+                        display: inline-block;
+                        padding: 6px 14px;
+                        border-radius: 14px;
+                        font-size: 13px;
+                     cursor: pointer;
+                     margin-right: 10px;
+                     border: none;
+                    }
+                    .start-btn { background: #c6f6d5; }
+                    .stop-btn  { background: #fed7d7; }
+                    .clear-btn { background: #bee3f8; }
                     details { margin-bottom: 10px; }
                     pre { background: #f4f4f4; padding: 10px; border-radius: 8px; overflow-x: auto;}
                     """.trimIndent(),
@@ -230,6 +245,16 @@ class Application {
                 append("</style></head><body>")
 
                 append("<h2>📦 Received Events</h2>")
+
+                append(
+                    """
+                    <div style='margin-bottom:16px;'>
+                        <button class='control-btn start-btn' onclick="fetch('/internal/start')">Start/button>
+                        <button class='control-btn stop-btn'  onclick="fetch('/internal/stop')">Stop</button>
+                        <button class='control-btn clear-btn' onclick="fetch('/internal/clear')">Clear</button>
+                    </div>
+                    """.trimIndent(),
+                )
 
                 if (allEvents.isEmpty()) {
                     append("<p>No events received yet.</p>")
