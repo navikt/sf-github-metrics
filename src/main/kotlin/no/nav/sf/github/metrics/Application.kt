@@ -315,7 +315,7 @@ class Application {
                     append("<p>No events received yet.</p>")
                 } else {
                     allEvents.forEach { (repoName, events) ->
-                        append("<details class='repo'><summary><b>$repoName</b></summary>")
+                        append("<details class='repo'><summary><b>$repoName  (${events.size} events)</b></summary>")
 
                         events.forEach { event ->
                             val pillColor =
