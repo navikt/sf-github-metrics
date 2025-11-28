@@ -46,7 +46,7 @@ class Application {
 
     val cluster = if (local) "local" else env(env_NAIS_CLUSTER_NAME)
 
-    val webhookSecret = env(secret_WEBHOOK_SECRET)
+    // val webhookSecret = env(secret_WEBHOOK_SECRET)
 
     fun apiServer(port: Int): Http4kServer = api().asServer(Netty(port))
 
