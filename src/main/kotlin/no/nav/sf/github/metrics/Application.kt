@@ -216,7 +216,7 @@ class Application {
                     
                             // Start auto-refresh if recording AND no timer exists
                             if (isRecording && !refreshTimer) {
-                                refreshTimer = setInterval(() => location.reload(), 2000);
+                                refreshTimer = setInterval(() => location.reload(), 1000);
                             }
                     
                             // Stop auto-refresh if no longer recording
@@ -281,12 +281,14 @@ class Application {
                 append(
                     """
                     .status-lamp {
-                        width: 14px;
-                        height: 14px;
+                        width: 20px;
+                        height: 20px;
                         border-radius: 50%;
+                        border: #d8d8d8;
+                        border-style: solid;
                         display: inline-block;
                         margin-right: 12px;
-                        background: #a6acb5; /* default gray */
+                        background: #00f04b; /* #a6acb5 ;default gray */
                     }
                     """.trimIndent(),
                 )
