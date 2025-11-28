@@ -301,11 +301,7 @@ class Application {
                     <div style='margin-bottom:16px;'>
                         <div id='recordLamp' class='status-lamp'></div>
                         <button class='control-btn start-btn' onclick="fetch('/internal/start')">Start</button>
-                        <button class='control-btn stop-btn'  onclick="
-                            fetch('/internal/start').then(() => {
-                                location.reload();
-                             });
-                            "">Stop</button>
+                        <button class='control-btn stop-btn' onclick="fetch('/internal/stop').then(() => location.reload())">Stop</button>
                         <button class='control-btn clear-btn' onclick="fetch('/internal/clear')">Clear</button>
                     </div>
                     """.trimIndent(),
