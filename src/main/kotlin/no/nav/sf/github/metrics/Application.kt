@@ -64,6 +64,7 @@ class Application {
                 allEvents.clear()
                 Response(OK)
             },
+            "/internal/isRecording" bind Method.GET to { Response(OK).body(recordEventsForGui.toString()) },
             "/webhook" bind Method.GET to { Response(OK).body("Up") },
             "/webhook" bind Method.POST to webhookHandler,
         )
@@ -200,6 +201,41 @@ class Application {
         val html =
             buildString {
                 append("<html><head>")
+                append(
+                    """
+                    <script>
+                        let refreshTimer = null;
+                    
+                        async function checkRecordingStatus() {
+                            const res = await fetch('/internal/isRecording');
+                            const isRecording = (await res.text()).trim() === 'true';
+                    
+                            // Update lamp color
+                            const lamp = document.getElementById('recordLamp');
+                            lamp.style.background = isRecording ? '#00f04b' : '#a6acb5';
+                    
+                            // Start auto-refresh if recording AND no timer exists
+                            if (isRecording && !refreshTimer) {
+                                refreshTimer = setInterval(() => location.reload(), 2000);
+                            }
+                    
+                            // Stop auto-refresh if no longer recording
+                            if (!isRecording && refreshTimer) {
+                                clearInterval(refreshTimer);
+                                refreshTimer = null;
+                            }
+                        }
+                    
+                        // Runs once when page loads
+                        window.onload = checkRecordingStatus;
+                    
+                        // Trigger fetch when buttons are clicked
+                        function trigger(action) {
+                            fetch('/internal/' + action).then(checkRecordingStatus);
+                        }
+                    </script>
+                    """.trimIndent(),
+                )
                 append("<style>")
                 append(
                     """
@@ -242,6 +278,18 @@ class Application {
                     pre { background: #f4f4f4; padding: 10px; border-radius: 8px; overflow-x: auto;}
                     """.trimIndent(),
                 )
+                append(
+                    """
+                    .status-lamp {
+                        width: 14px;
+                        height: 14px;
+                        border-radius: 50%;
+                        display: inline-block;
+                        margin-right: 12px;
+                        background: #a6acb5; /* default gray */
+                    }
+                    """.trimIndent(),
+                )
                 append("</style></head><body>")
 
                 append("<h2>📦 Received Events</h2>")
@@ -249,6 +297,7 @@ class Application {
                 append(
                     """
                     <div style='margin-bottom:16px;'>
+                        <div id='recordLamp' class='status-lamp'></div>
                         <button class='control-btn start-btn' onclick="fetch('/internal/start')">Start</button>
                         <button class='control-btn stop-btn'  onclick="fetch('/internal/stop')">Stop</button>
                         <button class='control-btn clear-btn' onclick="fetch('/internal/clear')">Clear</button>
