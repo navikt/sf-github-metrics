@@ -308,10 +308,10 @@ class Application {
                 )
 
                 if (allEvents.isEmpty()) {
-                    append("<p>No events received yet.</p>")
+                    append("<p>No events recorded for gui yet.</p>")
                 } else {
                     allEvents.forEach { (repoName, events) ->
-                        append("<details class='repo'><summary><b>$repoName  (${events.size} events)</b></summary>")
+                        append("<details class='repo' open><summary><b>$repoName  (${events.size} events)</b></summary>")
 
                         events.forEach { event ->
                             val pillColor =
