@@ -115,10 +115,13 @@ class Application {
             }
 
             val workflowRun = payload["workflow_run"]?.asJsonObject
+            val workflowJob = payload["workflow_job"]?.asJsonObject
 
-            if (
-                eventType == "workflow_run" && // Correct event type
-                actionValue == "completed" && // Finished run
+            if (eventType == "push") {
+                Metrics.pushCount.labels(repoName).inc()
+            } else if (
+                eventType == "workflow_run" &&
+                actionValue == "completed" &&
                 workflowRun != null
             ) {
                 val branch = workflowRun["head_branch"]?.asString ?: "unknown-branch"
@@ -147,13 +150,9 @@ class Application {
                 log.info {
                     "Workflow conclusion detected: $repoName / $name ($branch) / $event / $path / $conclusion / duration: ${durationWorkflow.seconds} s"
                 }
-            }
-
-            val workflowJob = payload["workflow_job"]?.asJsonObject
-
-            if (
-                eventType == "workflow_job" && // Correct event type
-                actionValue == "completed" && // Finished run
+            } else if (
+                eventType == "workflow_job" &&
+                actionValue == "completed" &&
                 workflowJob != null
             ) {
                 val branch = workflowJob["head_branch"]?.asString ?: "unknown-branch"

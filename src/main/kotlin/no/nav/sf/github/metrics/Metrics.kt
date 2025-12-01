@@ -18,6 +18,8 @@ object Metrics {
 
     val cRegistry: CollectorRegistry = CollectorRegistry.defaultRegistry
 
+    val pushCount = registerLabelCounter("push_count", "repo")
+
     val latestJobDuration =
         registerLabelGauge(
             "latest_job_duration",
