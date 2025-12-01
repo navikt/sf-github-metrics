@@ -25,6 +25,8 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import kotlin.time.Duration.Companion.seconds
 
+const val MAX_GLOBAL_EVENTS_FOR_GUI = 2000
+
 class Application {
     private val log = KotlinLogging.logger { }
 
@@ -102,6 +104,11 @@ class Application {
             val actionValue = payload.get("action")?.asString ?: ""
 
             if (recordEventsForGui) {
+                val globalEventCount = allEvents.values.sumOf { it.size }
+                if (globalEventCount > MAX_GLOBAL_EVENTS_FOR_GUI) {
+                    log.warn("Filled up stored events for gui of $MAX_GLOBAL_EVENTS_FOR_GUI - will clear")
+                    allEvents.clear()
+                }
                 allEvents
                     .getOrPut(repoName) { mutableListOf() }
                     .add(EventEntry(currentDateTime, eventType, gsonPretty.toJson(payload), actionValue))
