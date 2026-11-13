@@ -46,7 +46,7 @@ dependencies {
     implementation "io.prometheus:simpleclient_common:0.9.0"
     implementation "io.prometheus:simpleclient_hotspot:0.9.0"
 
-    implementation "tools.jackson.core:jackson-databind:3.2.4" // Transitive for logstash 9.0
+    implementation "tools.jackson.core:jackson-databind:3.3.0" // Transitive for logstash 9.0
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.4'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.4'
@@ -67,4 +67,11 @@ sourceSets {
 
 kotlin {
     jvmToolchain(21)
+}
+
+tasks.named('shadowJar') {
+    mergeServiceFiles()
+    filesMatching(['META-INF/services/**', 'META-INF/*.kotlin_module']) {
+        duplicatesStrategy = org.gradle.api.file.DuplicatesStrategy.INCLUDE
+    }
 }
